@@ -1,8 +1,8 @@
-name: validate_genome
+name: bismark
 channels:
   - conda-forge
   - bioconda
   - nodefaults
 dependencies:
-  - python=3.12
-  - biopython=1.85
+  - pigz=2.8
+  - bioconda:bismark=0.25.1

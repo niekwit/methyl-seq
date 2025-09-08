@@ -1,112 +1,136 @@
-# ----------------------------------------------------- #
-# EXAMPLE WORKFLOW                                      #
-# ----------------------------------------------------- #
-
-
-# fetch genome sequence from NCBI
+# Trim reads
 # -----------------------------------------------------
-rule get_genome:
-    output:
-        fasta="results/get_genome/genome.fna",
-    conda:
-        "../envs/get_genome.yaml"
-    message:
-        """--- Downloading genome sequence."""
-    params:
-        ncbi_ftp=lookup(within=config, dpath="get_genome/ncbi_ftp"),
-    log:
-        "results/get_genome/genome.log",
-    shell:
-        "wget -O results/get_genome/genome.fna.gz {params.ncbi_ftp} > {log} 2>&1 && "
-        "gunzip results/get_genome/genome.fna.gz >> {log} 2>&1"
-
-
-# validate genome sequence file
-# -----------------------------------------------------
-rule validate_genome:
+rule trim_galore:
     input:
-        fasta=rules.get_genome.output.fasta,
+        ["reads/{sample}_R1_001.fastq.gz", "reads/{sample}_R2_001.fastq.gz"],
     output:
-        fasta="results/validate_genome/genome.fna",
-    conda:
-        "../envs/validate_genome.yaml"
-    message:
-        """--- Validating genome sequence file."""
-    log:
-        "results/validate_genome/genome.log",
-    script:
-        "../scripts/validate_fasta.py"
-
-
-# simulate read data using DWGSIM
-# -----------------------------------------------------
-rule simulate_reads:
-    input:
-        fasta=rules.validate_genome.output.fasta,
-    output:
-        multiext(
-            "results/simulate_reads/{sample}",
-            read1=".bwa.read1.fastq.gz",
-            read2=".bwa.read2.fastq.gz",
-        ),
-    conda:
-        "../envs/simulate_reads.yaml"
-    message:
-        """--- Simulating read data with DWGSIM."""
+        fasta_fwd=temp("results/trimmed/{sample}_R1.fq.gz"),
+        report_fwd="logs/trim_galore/{sample}_R1_trimming_report.txt",
+        fasta_rev=temp("results/trimmed/{sample}_R2.fq.gz"),
+        report_rev="logs/trim_galore/{sample}_R2_trimming_report.txt",
+    threads: 4
+    resources: 
+        runtime=30,
     params:
-        output_type=1,
-        read_length=lookup(within=config, dpath="simulate_reads/read_length"),
-        read_number=lookup(within=config, dpath="simulate_reads/read_number"),
+        extra="--illumina -q 20",
     log:
-        "results/simulate_reads/{sample}.log",
-    shell:
-        "output_prefix=`echo {output.read1} | cut -f 1 -d .`;"
-        "dwgsim "
-        " -1 {params.read_length}"
-        " -2 {params.read_length}"
-        " -N {params.read_number}"
-        " -o {params.output_type}"
-        " {input.fasta}"
-        " ${{output_prefix}}"
-        " > {log} 2>&1"
-
-
-# make QC report
-# -----------------------------------------------------
-rule fastqc:
-    input:
-        fastq="results/simulate_reads/{sample}.bwa.{read}.fastq.gz",
-    output:
-        html="results/fastqc/{sample}.bwa.{read}_fastqc.html",
-        zip="results/fastqc/{sample}.bwa.{read}_fastqc.zip",
-    params:
-        extra="--quiet",
-    message:
-        """--- Checking fastq files with FastQC."""
-    log:
-        "results/fastqc/{sample}.bwa.{read}.log",
-    threads: 1
+        "logs/trim_galore/{sample}.log",
     wrapper:
-        "v6.0.0/bio/fastqc"
+        "v7.2.0/bio/trim_galore/pe"
 
-
-# run multiQC on tool output
+# Align reads with Bismark
 # -----------------------------------------------------
-rule multiqc:
+rule align:
     input:
-        expand(
-            "results/fastqc/{sample}.bwa.{read}_fastqc.{ext}",
-            sample=samples.index,
-            read=["read1", "read2"],
-            ext=["html", "zip"],
-        ),
+        dir="resources/Bisulfite_Genome",
+        r1="results/trimmed/{sample}_R1.fq.gz",
+        r2="results/trimmed/{sample}_R2.fq.gz",
     output:
-        report="results/multiqc/multiqc_report.html",
-    params:
-        extra="--verbose --dirs",
-    message:
-        """--- Generating MultiQC report for seq data."""
+        bam=temp("results/bismark/{sample}_R1_bismark_bt2_pe.bam"),
     log:
-        "results/multiqc/multiqc.log",
-    wrapper:
-        "v6.0.0/bio/multiqc"
+        "logs/bismark_align/{sample}.log",
+    threads: 12
+    resources:
+        runtime=60,
+    conda:
+        "../envs/bismark.yaml"
+    shell:
+        "bismark "
+        "--genome resources/ "
+        "-p {threads} "
+        "-1 {input.r1} "
+        "-2 {input.r2} "
+        "-o results/aligned/ "
+        "2> {log}"
+
+# Deduplicate aligned reads with Bismark
+# -----------------------------------------------------
+rule deduplication:
+    input:
+        bam="results/bismark/{sample}_R1_bismark_bt2_pe.bam",
+    output:
+        bam="results/bismark/{sample}.deduplicated.bam",
+    log:
+        "logs/deduplication/{sample}.log",
+    threads: 4
+    resources:
+        runtime=30,
+    conda:
+        "../envs/bismark.yaml"
+    shell:
+        "deduplicate_bismark "
+        "--paired "
+        "--outfile {wildcards.sample} "
+        "--output_dir results/deduplicated/ "
+        "--bam "
+        "{input.bam} "
+        "2> {log}"
+
+# Extract methylation call for every single C analysed with Bismark
+# -----------------------------------------------------
+'''
+rule methylation_extraction:
+    input:
+        bam="results/bismark/{sample}.deduplicated.bam",
+    output:
+        dir=directory("results/bismark/{sample}/")
+    log:
+        "logs/methylation_extraction/{sample}.log"
+    threads: 4
+    resources:
+        runtime=30,
+    conda:
+        "../envs/bismark.yaml"
+    shell:
+        "bismark_methylation_extractor "
+        "--paired-end "
+        "--output_dir {output.dir} "
+        "--bam "
+        "--cytosine_report "
+        "--gzip "
+        "--no_header "
+        "--buffer_size 10G "
+        "--genome_folder resources/ "
+        "{input.bam} "
+        "2> {log}"
+'''
+# Extract nucleotide coverage
+# -----------------------------------------------------
+rule nucleotide_coverage:
+    input:
+        bam="results/bismark/{sample}.deduplicated.bam",
+    output:
+        stats="results/bismark/{sample}.deduplicated.nucleotide_stats.txt",
+    params:
+        dir=lambda wc, output: os.path.dirname(output.stats)
+    log:
+        "logs/nucleotide_coverage/{sample}.log"
+    threads: 4
+    resources:
+        runtime=30,
+    conda:
+        "../envs/bismark.yaml"
+    shell:
+        "mkdir -p {params.dir}; "
+        "bam2nuc "
+        "--dir {params.dir} "
+        "--genome_folder resources/ "
+        "{input.bam} "
+        "2> {log}"
+
+'''
+rule summary_report:
+    input:
+        expand("results/bismark/{sample}.bam", sample=SAMPLES),
+    output:
+        "results/bismark/report.html",
+    log:
+        "logs/bismark/summary_report.log"
+    threads: 2
+    resources:
+        runtime=30,
+    conda:
+        "../envs/bismark.yaml"
+    shell:
+        "bismark2summary -o {output} {input}"
+'''
