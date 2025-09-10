@@ -1,2 +1,14 @@
 genome: hg38
 ensembl_genome_build: 114
+temp_dir: /tmp
+
+# https://felixkrueger.github.io/Bismark/bismark/library_types/
+trim_galore_args: "--clip_R1 10 --clip_R2 10 --three_prime_clip_R1 10 --three_prime_clip_R2 10"
+
+# Extra bismark arguments for each Bismark sub command
+bismark:
+  align: ""
+  deduplicate: ""
+  extract: ""
+  coverage: ""
+  report: ""
