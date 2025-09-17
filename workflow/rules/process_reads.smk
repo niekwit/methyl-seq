@@ -31,6 +31,7 @@ if PAIRED_END:
             r2="results/trimmed/{sample}_R2.fq.gz",
         output:
             bam=temp("results/bismark/{sample}/{sample}_R1_bismark_bt2_pe.bam"),
+            bg="results/bismark/{sample}/{sample}.deduplicated.bedgraph",
         params:
             outdir=lambda wc, output: os.path.dirname(output.bam),
         log:
@@ -72,6 +73,7 @@ else:
             fq="results/trimmed/{sample}.fq.gz",
         output:
             bam=temp("results/bismark/{sample}/{sample}.bismark_bt2.bam"),
+            bg="results/bismark/{sample}/{sample}.deduplicated.bedgraph",
         params:
             outdir=lambda wc, output: os.path.dirname(output.bam),
         log:
