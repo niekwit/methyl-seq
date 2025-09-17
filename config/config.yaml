@@ -12,3 +12,11 @@ bismark:
   extract: ""
   coverage: ""
   report: ""
+
+# Deeptools parameters
+deeptools:
+  bigwig_summary:
+    binSize: 10000
+    extra: ""
+  plotPCA:
+    extra: ""
