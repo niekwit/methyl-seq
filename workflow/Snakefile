@@ -1,20 +1,23 @@
-
-
-# load configuration
+# Load configuration
 # -----------------------------------------------------
 configfile: "config/config.yaml"
 
+
 include: "rules/common.smk"
 
-SAMPLES = import_samples()
+
+PAIRED_END = paired_end()
+SAMPLES = import_samples(PAIRED_END)
+CSV = pd.read_csv("config/samples.csv")
+CONDITIONS = conditions(CSV)
 
 
-# load rules
+# Load rules
 # -----------------------------------------------------
 include: "rules/process_reads.smk"
 include: "rules/qc.smk"
 include: "rules/resources.smk"
-
+include: "rules/bigwig.smk"
 
 
 # -----------------------------------------------------
@@ -30,9 +33,16 @@ onerror:
     print("\n--- An error occurred! ---\n")
 
 
-# target rules
+# Target rules
 # -----------------------------------------------------
 rule all:
     input:
         #"results/multiqc/multiqc_report.html",
-        expand("results/bismark/{sample}.deduplicated.nucleotide_stats.txt", sample=SAMPLES)
+        expand(
+            "results/bismark/{sample}/{sample}.deduplicated.nucleotide_stats.txt",
+            sample=SAMPLES,
+        ),
+        expand(
+            "results/bismark/{sample}/{sample}.deduplicated.M-bias.txt", sample=SAMPLES
+        ),
+        expand("results/bigwig/{condition}.bw", condition=CONDITIONS),
