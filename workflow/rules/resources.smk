@@ -8,6 +8,8 @@ rule get_fasta:
         url=resources.fasta_url,
     log:
         "logs/resources/get_fasta.log",
+    conda:
+        "../envs/bismark.yaml"
     threads: 1
     shell:
         "wget -q {params.url} -O {output} 2> {log}"
@@ -20,9 +22,38 @@ rule unpack_fasta:
         resources.fasta
     log:
         "logs/resources/unpack_fasta.log",
+    conda:
+        "../envs/bismark.yaml"
     threads: 1
     shell:
         "pigz -df {input} > {output} 2> {log}"
+
+rule index_fasta:
+    input:
+        resources.fasta,
+    output:
+        f"{resources.fasta}.fai"
+    log:
+        "logs/resources/index_fasta.log",
+    threads: 1
+    conda:
+        "../envs/bismark.yaml"
+    shell:
+        "samtools faidx {input} 2> {log}"
+    
+
+rule chrom_sizes:
+    input:
+        f"{resources.fasta}.fai"
+    output:
+        "resources/chrom_sizes.txt",
+    log:
+        "logs/resources/chrom_sizes.log",
+    threads: 1
+    conda:
+        "../envs/bismark.yaml"
+    shell:
+        "cut -f1,2 {input} > {output} 2> {log}"
 
 
 use rule get_fasta as get_gtf with:
