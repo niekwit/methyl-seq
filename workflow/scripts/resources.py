@@ -4,14 +4,14 @@ import os
 class Resources:
     """Gets URLs and file names of fasta and GTF files for a given genome and build"""
 
-    # create genome directory
-    os.makedirs("resources/", exist_ok=True)
+    # Create genome directory
+    os.makedirs("resources/downloaded_fasta", exist_ok=True)
 
     def __init__(self, genome, build):
         self.genome = genome
         self.build = build
 
-        # base URLs
+        # Base URLs
         base_url_ens = f"https://ftp.ensembl.org/pub/release-{build}/"
 
         if "hg" in genome:
@@ -20,7 +20,7 @@ class Resources:
             elif genome == "hg38":
                 name = "GRCh38"
 
-            # create URLs for genome files
+            # Create URLs for genome files
             self.fasta_url = f"{base_url_ens}fasta/homo_sapiens/dna/Homo_sapiens.{name}.dna.primary_assembly.fa.gz"
             self.gtf_url = (
                 f"{base_url_ens}gtf/homo_sapiens/Homo_sapiens.{name}.{build}.gtf.gz"
@@ -32,7 +32,7 @@ class Resources:
             elif genome == "mm39":
                 name = "GRCm39"
 
-            # create URLs for genome files
+            # Create URLs for genome files
             self.fasta_url = f"{base_url_ens}fasta/mus_musculus/dna/Mus_musculus.{name}.dna.primary_assembly.fa.gz"
             self.gtf_url = (
                 f"{base_url_ens}gtf/mus_musculus/Mus_musculus.{name}.{build}.gtf.gz"
@@ -52,10 +52,14 @@ class Resources:
         else:
             raise ValueError("Genome {genome} not supported")
 
-        # downloaded unzipped file names
+        # Downloaded unzipped file names
         self.fasta = self._file_from_url(self.fasta_url)
         self.gtf = self._file_from_url(self.gtf_url)
+        
+        # Control fasta from NEB GitHub
+        self.control_fasta_url = "https://raw.githubusercontent.com/nebiolabs/EM-seq/refs/heads/master/methylation_controls.fa"
+        self.control_fasta = self._file_from_url(self.control_fasta_url)
 
     def _file_from_url(self, url):
         """Returns file path for unzipped downloaded file"""
-        return f"resources/{os.path.basename(url).replace('.gz','')}"
+        return f"resources/downloaded_fasta/{os.path.basename(url).replace('.gz','')}"
