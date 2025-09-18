@@ -2,10 +2,11 @@
 # -----------------------------------------------------
 rule bedgraph_to_bigwig:
     input:
-        bg="results/bismark/{sample}/{sample}.deduplicated.bedgraph",
+        bg="results/bismark/{sample}/{sample}.deduplicated.bedGraph.gz",
         cs="resources/chrom_sizes.txt",
     output:
-        "results/bismark/{sample}/{sample}.deduplicated.bw",
+        bw="results/bismark/{sample}/{sample}.deduplicated.bw",
+        bg=temp("results/bismark/{sample}/{sample}.deduplicated.bedGraph"),
     log:
         "logs/bedgraph_to_bigwig/{sample}.log",
     threads: 4
@@ -14,10 +15,12 @@ rule bedgraph_to_bigwig:
     conda:
         "../envs/deeptools.yaml"
     shell:
+        # bedGraphToBigWig does not like piped input
+        "pigz -p 4 -dc {input.bg} > {output.bg}; "
         "bedGraphToBigWig "
-        "{input.bg} "
+        "{output.bg} "
         "{input.cs} "
-        "{output} "
+        "{output.bw} "
         "2> {log}"
 
 
