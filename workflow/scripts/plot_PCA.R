@@ -80,7 +80,6 @@ scalefactor <- max(data$Eigenvalue) / 100
 # Prepare data for scree plot
 df <- data %>%
   dplyr::select(c("Component", "Eigenvalue")) %>%
-  mutate(Component = paste0("PC", Component)) %>%
   mutate(
     cumulative_variance = (cumsum(Eigenvalue) /
       sum(Eigenvalue) *
