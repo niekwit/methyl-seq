@@ -1,0 +1,13 @@
+name: R
+channels:
+  - conda-forge
+  - bioconda
+  - nodefaults
+dependencies:
+  - r-base=4.4
+  - r-tidyverse=2.0.0
+  - r-cowplot=1.2.0
+  - r-rcolorbrewer
+  - r-ggrepel=0.9.6
+  - r-scales=1.4.0
+  - r-data.table=1.17.8
