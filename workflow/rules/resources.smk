@@ -1,6 +1,4 @@
-
-
-rule get_fasta:
+rule get_genome_fasta:
     output:
         f"{resources.fasta}.gz",
     retries: 3
@@ -15,24 +13,35 @@ rule get_fasta:
         "wget -q {params.url} -O {output} 2> {log}"
 
 
-rule unpack_fasta:
-    input:
-        f"{resources.fasta}.gz",
+use rule get_genome_fasta as get_control_fasta with:
     output:
-        resources.fasta
+        f"{resources.control_fasta}",
+    params:
+        url=resources.control_fasta_url,
     log:
-        "logs/resources/unpack_fasta.log",
+        "logs/resources/get_control_fasta.log",
+
+
+rule combine_fasta:
+    input:
+        genome=f"{resources.fasta}.gz",
+        control=resources.control_fasta,
+    output:
+        "resources/combined_genome.fa",
+    log:
+        "logs/resources/combine_fasta.log",
+    threads: 1
     conda:
         "../envs/bismark.yaml"
-    threads: 1
     shell:
-        "pigz -df {input} > {output} 2> {log}"
+        "cat <(zcat {input.genome}) {input.control}  > {output} 2> {log}"
+
 
 rule index_fasta:
     input:
-        resources.fasta,
+        "resources/combined_genome.fa",
     output:
-        f"{resources.fasta}.fai"
+        "resources/combined_genome.fa.fai",
     log:
         "logs/resources/index_fasta.log",
     threads: 1
@@ -44,7 +53,7 @@ rule index_fasta:
 
 rule chrom_sizes:
     input:
-        f"{resources.fasta}.fai"
+        "resources/combined_genome.fa.fai",
     output:
         "resources/chrom_sizes.txt",
     log:
@@ -56,7 +65,7 @@ rule chrom_sizes:
         "cut -f1,2 {input} > {output} 2> {log}"
 
 
-use rule get_fasta as get_gtf with:
+use rule get_genome_fasta as get_gtf with:
     output:
         resources.gtf,
     params:
@@ -67,7 +76,7 @@ use rule get_fasta as get_gtf with:
 
 rule bismark_genome_preparation:
     input:
-        fasta=resources.fasta,
+        fasta="resources/combined_genome.fa",
     output:
         directory("resources/Bisulfite_Genome")
     log:

@@ -38,6 +38,7 @@ onerror:
 rule all:
     input:
         #"results/multiqc/multiqc_report.html",
+        "results/plots/PCA.pdf",
         expand(
             "results/bismark/{sample}/{sample}.deduplicated.nucleotide_stats.txt",
             sample=SAMPLES,
@@ -46,3 +47,5 @@ rule all:
             "results/bismark/{sample}/{sample}.deduplicated.M-bias.txt", sample=SAMPLES
         ),
         expand("results/bigwig/{condition}.bw", condition=CONDITIONS),
+        "results/plots/methylation_conversion_rate.csv",
+        "results/plots/methylation_conversion_rate.pdf",

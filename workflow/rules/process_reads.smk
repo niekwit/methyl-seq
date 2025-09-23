@@ -31,7 +31,6 @@ if PAIRED_END:
             r2="results/trimmed/{sample}_R2.fq.gz",
         output:
             bam=temp("results/bismark/{sample}/{sample}_R1_bismark_bt2_pe.bam"),
-            bg="results/bismark/{sample}/{sample}.deduplicated.bedgraph",
         params:
             outdir=lambda wc, output: os.path.dirname(output.bam),
         log:
@@ -72,8 +71,7 @@ else:
             dir="resources/Bisulfite_Genome",
             fq="results/trimmed/{sample}.fq.gz",
         output:
-            bam=temp("results/bismark/{sample}/{sample}.bismark_bt2.bam"),
-            bg="results/bismark/{sample}/{sample}.deduplicated.bedgraph",
+            bam=temp("results/bismark/{sample}/{sample}_bismark_bt2.bam"),
         params:
             outdir=lambda wc, output: os.path.dirname(output.bam),
         log:
@@ -125,6 +123,8 @@ rule methylation_extraction:
         sreport="results/bismark/{sample}/{sample}.deduplicated_splitting_report.txt",
         mbias="results/bismark/{sample}/{sample}.deduplicated.M-bias.txt",
         bg="results/bismark/{sample}/{sample}.deduplicated.bedGraph.gz", #CpG only
+        cpgot="results/bismark/{sample}/CpG_OT_{sample}.deduplicated.txt.gz",
+        cpgob="results/bismark/{sample}/CpG_OB_{sample}.deduplicated.txt.gz",
     params:
         outdir=lambda wc, output: os.path.dirname(output.sreport),
     log:

@@ -3,6 +3,7 @@ import glob
 import os
 from scripts.resources import Resources
 from snakemake.utils import validate
+from snakemake.logging import logger
 
 resources = Resources(config["genome"], config["ensembl_genome_build"])
 
@@ -20,9 +21,9 @@ def paired_end():
     paired_end = all(("_R1_" in f or "_R2_" in f) for f in fastq)
 
     if paired_end:
-        print("Paired-end reads detected.")
+        logger.info("Paired-end reads detected.")
     else:
-        print("Single-end reads detected.")
+        logger.info("Single-end reads detected.")
 
     return paired_end
 
