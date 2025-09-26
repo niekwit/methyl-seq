@@ -1,6 +1,6 @@
 rule get_genome_fasta:
     output:
-        f"{resources.fasta}.gz",
+        resources.fasta,
     retries: 3
     params:
         url=resources.fasta_url,
@@ -10,21 +10,28 @@ rule get_genome_fasta:
         "../envs/bismark.yaml"
     threads: 1
     shell:
-        "wget -q {params.url} -O {output} 2> {log}"
+        "wget -q {params.url} -O {output}.gz 2> {log} ;"
+        "pigz -d -c {output}.gz > {output}"
 
 
-use rule get_genome_fasta as get_control_fasta with:
+rule get_control_fasta:
     output:
-        f"{resources.control_fasta}",
+        resources.control_fasta,
     params:
         url=resources.control_fasta_url,
+    retries: 3
     log:
         "logs/resources/get_control_fasta.log",
+    conda:
+        "../envs/bismark.yaml"
+    threads: 1
+    shell:
+        "wget -q {params.url} -O {output} 2> {log}"
 
 
 rule combine_fasta:
     input:
-        genome=f"{resources.fasta}.gz",
+        genome=resources.fasta,
         control=resources.control_fasta,
     output:
         "resources/combined_genome.fa",
@@ -34,7 +41,7 @@ rule combine_fasta:
     conda:
         "../envs/bismark.yaml"
     shell:
-        "cat <(zcat {input.genome}) {input.control}  > {output} 2> {log}"
+        "cat {input.genome} {input.control}  > {output} 2> {log}"
 
 
 rule index_fasta:
@@ -84,7 +91,47 @@ rule bismark_genome_preparation:
     threads: 40 # make sure to assign half of this to bismark
     resources:
         runtime=360,
+        mem_mb=60000,
     conda:
         "../envs/bismark.yaml"
     script:
         "../scripts/bismark_genome_preparation.py"
+
+# Annotate CpGs in the genome
+# -----------------------------------------------------
+rule find_cpgs:
+    input:
+        resources.fasta,
+    output:
+        "resources/cpg_sites.bed",
+    log:
+        "logs/resources/find_cpgs.log",
+    threads: 10
+    resources:
+        runtime=120,
+        mem_mb=10000,
+    conda:
+        "../envs/deeptools.yaml"
+    shell:
+        "python workflow/scripts/find_cpgs.py {input} {output} {log}"
+
+# Create CpG probe BED file
+# -----------------------------------------------------
+rule create_cpg_probes:
+    input:
+        "resources/cpg_sites.bed",
+    output:
+        "resources/cpg_probes.bed",
+    params:
+        # Number of CpGs per probe
+        n=config["boxplot"]["cpg_n"],
+    log:
+        "logs/resources/create_cpg_probes.log",
+    threads: 10
+    resources:
+        runtime=120,
+        mem_mb=10000,
+    conda:
+        "../envs/deeptools.yaml"
+    shell:
+        "python workflow/scripts/create_cpg_probes.py {input} {output} {params.n} {log}"
