@@ -51,14 +51,8 @@ rule multiqc:
 # This will be corrected in R by adding 0 counts for missing methylation calls.
 rule cpg_coverage_control_dna:
     input:
-        cpgot=expand(
-            "results/bismark/{sample}/CpG_OT_{sample}.deduplicated.txt.gz",
-            sample=SAMPLES,
-        ),
-        cpgob=expand(
-            "results/bismark/{sample}/CpG_OB_{sample}.deduplicated.txt.gz",
-            sample=SAMPLES,
-        ),
+        cpgot="results/bismark/{sample}/CpG_OT_{sample}.deduplicated.txt.gz",
+        cpgob="results/bismark/{sample}/CpG_OB_{sample}.deduplicated.txt.gz",
     output:
         cov="results/bismark/{sample}/CpG_{sample}.coverage.txt",
     log:
