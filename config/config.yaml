@@ -20,3 +20,19 @@ deeptools:
     extra: ""
   plotPCA:
     extra: ""
+
+# Box plot parameters
+# % CpG methylation boxplots for different genomic regions
+boxplot:
+  plot: True
+  # Number of CpGs per probe
+  cpg_n: 50
+  min_reads: 5 # minimum reads covering a CpG to keep
+  regions:
+    # Genomic regions in BED format to plot boxplots for
+    # Whole genome is always included
+    CpG_islands: "config/annotations/hg38_CpG_islands.bed"
+    promoters: "config/annotations/hg38_promoters.bed"
+    exons: "config/annotations/hg38_exons.bed"
+    introns: "config/annotations/hg38_introns.bed"
+    intergenic: "config/annotations/hg38_intergenic.bed"
