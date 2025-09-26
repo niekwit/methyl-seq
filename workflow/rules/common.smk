@@ -12,6 +12,27 @@ resources = Resources(config["genome"], config["ensembl_genome_build"])
 # validate(config, schema="schemas/config.schema.yaml")
 
 
+def targets():
+    targets = [
+        "results/plots/PCA.pdf",
+        expand(
+            "results/bismark/{sample}/{sample}.deduplicated.nucleotide_stats.txt",
+            sample=SAMPLES,
+        ),
+        expand(
+            "results/bismark/{sample}/{sample}.deduplicated.M-bias.txt", sample=SAMPLES
+        ),
+        expand("results/bigwig/{condition}.bw", condition=CONDITIONS),
+        "results/plots/methylation_conversion_rate.csv",
+        "results/plots/methylation_conversion_rate.pdf",
+    ]
+
+    if config["boxplot"]["plot"]:
+        targets.append("results/boxplot/CpG_methylation_all_conditions_all_regions.txt")
+
+    return targets
+
+
 def paired_end():
     fastq = glob.glob("reads/*.fastq.gz")
 
@@ -57,3 +78,19 @@ def dedup_input(wildcards):
                 wildcards=wildcards
             )
         }
+
+
+def regions():
+    regions = config["boxplot"].get("regions", None)
+    # Get keys of regions dict
+    if regions:
+        # Create empty bed file for whole genome
+        with open("bed/whole.genome.bed", "w") as f:
+            f.write("")
+        
+        return ["whole.genome"] + list(regions.keys())
+    else:
+        raise ValueError("No regions defined in config file under boxplot:regions")
+
+
+
