@@ -10,7 +10,7 @@ PAIRED_END = paired_end()
 SAMPLES = import_samples(PAIRED_END)
 CSV = pd.read_csv("config/samples.csv")
 CONDITIONS = conditions(CSV)
-
+REGIONS = regions()
 
 # Load rules
 # -----------------------------------------------------
@@ -18,6 +18,8 @@ include: "rules/process_reads.smk"
 include: "rules/qc.smk"
 include: "rules/resources.smk"
 include: "rules/bigwig.smk"
+include: "rules/process_methylation_calls.smk"
+include: "rules/boxplot.smk"
 
 
 # -----------------------------------------------------
@@ -37,15 +39,4 @@ onerror:
 # -----------------------------------------------------
 rule all:
     input:
-        #"results/multiqc/multiqc_report.html",
-        "results/plots/PCA.pdf",
-        expand(
-            "results/bismark/{sample}/{sample}.deduplicated.nucleotide_stats.txt",
-            sample=SAMPLES,
-        ),
-        expand(
-            "results/bismark/{sample}/{sample}.deduplicated.M-bias.txt", sample=SAMPLES
-        ),
-        expand("results/bigwig/{condition}.bw", condition=CONDITIONS),
-        "results/plots/methylation_conversion_rate.csv",
-        "results/plots/methylation_conversion_rate.pdf",
+        targets()
