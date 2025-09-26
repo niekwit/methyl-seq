@@ -8,6 +8,21 @@ library(tidyverse)
 library(cowplot)
 library(data.table)
 
+# Define the correct column names for your custom 5-column format
+COV_COL_NAMES <- c("count", "contig", "pos", "methylation_status", "sample")
+
+# Read the data using lapply and fread
+cov_list <- lapply(
+  cov_files,
+  data.table::fread,
+  header = FALSE,
+  col.names = COV_COL_NAMES
+)
+
+# Combine the list into one data table
+cov_data <- data.table::rbindlist(cov_list)
+
+
 # Load coverage data
 cov_files <- snakemake@input[["cov"]]
 cov_list <- lapply(cov_files, fread, header = FALSE)
@@ -20,47 +35,32 @@ colnames(cov_data) <- c(
   "sample"
 )
 
-# Check if there are any probes with only one entry per condition per feature.
-# If a probe has only Z or z, the zero values will be missing in data of the
-# other methylation call (due to the way data is generated with uniq -c).
-# So if a probe has only one entry, add the missing methylation
-# call with zero counts.
-
-# Use data.table to complete the data, which is much faster than tidyr::complete
-
-# Convert to data.table
-setDT(cov_data)
-
-# Complete the data
-completed_data <- dcast(
-  cov_data,
-  contig + sample + pos ~ methylation_status,
-  value.var = "count",
-  fill = 0
-)
-
-# For each contig and sample, sum the counts of Z and z
-completed_data <- completed_data %>%
-  as.data.frame() %>%
-  group_by(contig, sample) %>%
+# Calculate methylation conversion rate per sample and contig
+df <- cov_data %>%
+  group_by(contig, sample, methylation_status) %>%
+  summarise(total = sum(count), .groups = "drop") %>%
+  tidyr::pivot_wider(
+    names_from = methylation_status,
+    values_from = total,
+    values_fill = 0
+  ) %>%
   mutate(
-    total_Z = sum(Z, na.rm = TRUE),
-    total_z = sum(z, na.rm = TRUE),
-    methylation_rate = total_Z / (total_Z + total_z) * 100
+    total_calls = Z + z,
+    methylation_rate = (Z / total_calls) * 100
   ) %>%
   ungroup()
 
 # Load sample info to set factor levels
 sample_info <- read.csv("config/samples.csv")
-completed_data$sample <- factor(
-  completed_data$sample,
+df$sample <- factor(
+  df$sample,
   levels = sample_info$sample
 )
 
+
 # Plot methylation conversion rate
-# Plot bar side-by-side for different contigs
 p <- ggplot(
-  completed_data,
+  df,
   aes(x = sample, y = methylation_rate, fill = contig)
 ) +
   geom_bar(stat = "identity", position = position_dodge()) +
