@@ -28,7 +28,7 @@ def targets():
     ]
 
     if config["boxplot"]["plot"]:
-        targets.append("results/boxplot/CpG_methylation_all_conditions_all_regions.txt")
+        targets.append("results/plots/boxplots.pdf")
 
     return targets
 
