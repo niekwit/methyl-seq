@@ -8,6 +8,10 @@ library(tidyverse)
 library(cowplot)
 library(data.table)
 
+
+# Load coverage data
+cov_files <- snakemake@input[["cov"]]
+
 # Define the correct column names for your custom 5-column format
 COV_COL_NAMES <- c("count", "contig", "pos", "methylation_status", "sample")
 
@@ -21,19 +25,6 @@ cov_list <- lapply(
 
 # Combine the list into one data table
 cov_data <- data.table::rbindlist(cov_list)
-
-
-# Load coverage data
-cov_files <- snakemake@input[["cov"]]
-cov_list <- lapply(cov_files, fread, header = FALSE)
-cov_data <- rbindlist(cov_list)
-colnames(cov_data) <- c(
-  "count",
-  "contig",
-  "pos",
-  "methylation_status",
-  "sample"
-)
 
 # Calculate methylation conversion rate per sample and contig
 df <- cov_data %>%
@@ -80,7 +71,7 @@ ggsave(snakemake@output[["pdf"]], plot = p)
 
 # Save data
 write.csv(
-  completed_data,
+  df,
   snakemake@output[["csv"]],
   row.names = FALSE,
   quote = FALSE
