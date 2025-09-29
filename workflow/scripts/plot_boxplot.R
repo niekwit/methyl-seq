@@ -12,7 +12,7 @@ library(cowplot)
 
 # Load CpG methylation data
 data <- read.delim(snakemake@input[[1]], header = FALSE)
-data %>%
+data <- data %>%
   setNames(c("count", "probe", "methylation_status", "region", "condition"))
 
 # Check if there are any probes with only one entry per condition per feature.
