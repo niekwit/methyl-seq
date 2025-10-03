@@ -7,9 +7,9 @@ if PAIRED_END:
             ["reads/{sample}_R1_001.fastq.gz", "reads/{sample}_R2_001.fastq.gz"],
         output:
             fasta_fwd=temp("results/trimmed/{sample}_R1.fq.gz"),
-            report_fwd="logs/trim_galore/{sample}_R1_trimming_report.txt",
+            report_fwd="logs/trim_galore_pe/{sample}_R1_trimming_report.txt",
             fasta_rev=temp("results/trimmed/{sample}_R2.fq.gz"),
-            report_rev="logs/trim_galore/{sample}_R2_trimming_report.txt",
+            report_rev="logs/trim_galore_pe/{sample}_R2_trimming_report.txt",
         threads: 4
         resources: 
             runtime=120,
@@ -59,6 +59,10 @@ else:
             report=temp("results/trimmed/{sample}_report.txt"),
         params:
             extra=f"--illumina -q 20 {config["trim_galore_args"]}",
+        resources: 
+            runtime=120,
+            mem_mb=20000,
+            tmpdir=config["temp_dir"],
         log:
             "logs/trim_galore_se/{sample}.log",
         wrapper:
