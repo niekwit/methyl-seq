@@ -49,7 +49,8 @@ awk = (
 
 # Create sort subcommand to filter out duplicate regions
 # and merge them by averaging the signal
-merge_sort = "LC_ALL=C sort -k1,1 -k2,2n | bedtools merge -c 4 -o mean -i - "
+#merge_sort = "LC_ALL=C sort -k1,1 -k2,2n | bedtools merge -c 4 -o mean -i - "
+merge_sort = "LC_ALL=C sort -k1,1 -k2,2n"
 
 # Create full command
 command = f"bedtools unionbedg -i {bg_input} | {awk} | {merge_sort} > {output_file}"
