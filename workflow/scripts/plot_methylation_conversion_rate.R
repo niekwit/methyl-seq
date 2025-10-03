@@ -57,7 +57,7 @@ p <- ggplot(
   geom_bar(stat = "identity", position = position_dodge()) +
   labs(
     x = NULL,
-    y = "Methylation Conversion Rate (%)"
+    y = "CpG methylation (%)"
   ) +
   scale_y_continuous(expand = c(0, 0), limits = c(0, 100)) +
   theme_cowplot() +
