@@ -46,9 +46,7 @@ output_file = snakemake.output["bg"]
 # Log variables for debugging
 logging.info(f"Processing condition: {condition}")
 logging.info(f"Input bedGraph files: {input_files}")
-logging.info(f"Condition: {condition}")
 logging.info(f"Output bedGraph files: {output_file}")
-
 
 ### Use a dictionary of dictionaries to store scores:
 # { (chrom, start, end): [score_sample1, score_sample2, ...] }
@@ -60,7 +58,6 @@ logging.info(f"Reading and aggregating data from {len(input_files)} files...")
 for i, file_path in enumerate(input_files):
     logging.info(f"Processing {file_path}...")
 
-    # Note: BedGraph files are typically space or tab separated
     with open(file_path, "r") as f:
         for line in f:
             if line.startswith(("track", "browser", "#")):
@@ -89,8 +86,7 @@ for (chrom, start, end), scores in all_scores.items():
     # Check if the site was covered in AT LEAST ONE sample (i.e., the total score > 0)
     if sum_scores > 0:
 
-        # Divide the sum by the TOTAL number of input files (3 in your case)
-        # This achieves the 100/3 = 33.3333 calculation
+        # Divide the sum by the TOTAL number of input files
         total_replicates = len(scores)
         average_score = sum_scores / total_replicates
 
