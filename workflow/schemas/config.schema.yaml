@@ -1,29 +1,74 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
 description: main configuration schema for the workflow
 properties:
-  samplesheet:
+  genome:
     type: string
-    description: path to sample-sheet TSV file
-
-  get_genome:
+    enum: ["hg19", "hg38", "mm38", "mm39"]
+    description: "Genome assembly to use"
+  ensembl_genome_build:
+    type: integer
+    description: "Ensembl genome build version"
+  temp_dir:
+    type: string
+    description: "Temporary directory for intermediate files"
+  trim_galore_args:
+    type: string
+    description: "Additional arguments to pass to Trim Galore"
+  bismark:
     type: object
+    description: "Extra Bismark arguments for each Bismark sub command"
     properties:
-      ncbi_ftp:
+      align:
         type: string
-        description: URL for genome retrieval
-    required: ["ncbi_ftp"]
-
-  simulate_reads:
+        description: "Extra arguments for Bismark alignment"
+      deduplicate:
+        type: string
+        description: "Extra arguments for Bismark deduplication"
+      extract:
+        type: string
+        description: "Extra arguments for Bismark methylation extraction"
+      coverage:
+        type: string
+        description: "Extra arguments for Bismark coverage report generation"
+      report:
+        type: string
+        description: "Extra arguments for Bismark report generation"
+  deeptools:
     type: object
+    description: "Deeptools parameters"
     properties:
-      read_length:
-        type: number
-        description: length of target reads in bp
-      read_number:
-        type: number
-        description: number of total reads to be simulated
-
-required:
-  - samplesheet
-  - get_genome
-  - simulate_reads
+      bigwig_summary:
+        type: object
+        properties:
+          binSize:
+            type: integer
+            description: "Bin size for bigwig summary"
+          extra:
+            type: string
+            description: "Extra arguments for bigwig summary"
+      plotPCA:
+        type: object
+        properties:
+          extra:
+            type: string
+            description: "Extra arguments for plotPCA"
+  boxplot:
+    type: object
+    description: "% CpG methylation boxplots for different genomic regions"
+    properties:
+      plot:
+        type: boolean
+        description: "Whether to generate boxplots"
+      cpg_n:
+        type: integer
+        description: "Number of CpGs per probe"
+      min_reads:
+        type: integer
+        description: "Minimum reads covering a CpG to keep"
+      regions:
+        type: object
+        description: "Genomic regions in BED format to plot boxplots for"
+        properties:
+          CpG_islands:
+            type: string
+            description: "Path to BED file for CpG islands"
