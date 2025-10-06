@@ -116,7 +116,7 @@ rule combine_boxplot_data:
         "../envs/deeptools.yaml"
     shell:
         "cat {input.data} | "
-        "sed 's/^\s*//;s/\s/\t/g' > {output}"
+        r"sed 's/^\s*//;s/\s/\t/g' > {output}"
 
 
 # Plot CpG methylation boxplot

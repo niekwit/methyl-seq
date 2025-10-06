@@ -68,7 +68,7 @@ rule cpg_coverage_control_dna:
         "awk -v OFS=\"\t\" '{{print $3, $4, $5}}' | "
         "sort -k1,1 -k2,2n | "
         "uniq -c | "
-        "sed 's/^\s*//;s/\s\s*/\t/g;s/$/\t{wildcards.sample}/' "
+        r"sed 's/^\s*//;s/\s\s*/\t/g;s/$/\t{wildcards.sample}/' "
         " > {output.cov} 2> {log}"
 
 
