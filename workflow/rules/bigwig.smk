@@ -6,7 +6,7 @@ rule bedgraph_to_bigwig:
         cs="resources/chrom_sizes.txt",
     output:
         bw="results/bismark/{sample}/{sample}.deduplicated.bw",
-        bg=temp("results/bismark/{sample}/{sample}.deduplicated.bedGraph"),
+        bg=temp("results/temp/{sample}.bg"),
     log:
         "logs/bedgraph_to_bigwig/{sample}.log",
     threads: 4
@@ -93,17 +93,37 @@ rule plotPCA:
         "../scripts/plot_PCA.R"
 
 
+# Decompress bedGraph files for averaging
+# -----------------------------------------------------
+#rule decompress_bedgraph:
+#    input:
+#        bg="results/bismark/{sample}/{sample}.deduplicated.bedGraph.gz",
+#    output:
+#        # Change extension to .bg for wiggletools compatibility
+#        bg=temp("results/temp/{sample}.bg"),
+#    resources:
+#        runtime=15,
+#        mem_mb=4000,
+#    threads: 4
+#    log:
+#        "logs/decompress_bedgraph/{sample}.log",
+#    conda:
+#        "../envs/deeptools.yaml"
+#    shell:
+#        "pigz -p {threads} -dc {input.bg} > {output.bg} 2> {log}"
+
+
 # Create average BedGraph files
 # -----------------------------------------------------
 rule average_bedgraphs:
     input:
         # All replicate bedGraphs for the current condition
         bg=lambda wildcards: expand(
-            "results/bismark/{sample}/{sample}.deduplicated.bedGraph.gz",
+            "results/temp/{sample}.bg",
             sample=[s for s in SAMPLES if s.startswith(wildcards.condition)]
-        )
+        ),
     output:
-        bg=temp("results/bismark/{condition}_average_deduplicated.bedGraph"),
+        bg=temp("results/temp/{condition}.bg"),
     resources:
         runtime=120,
     log:
@@ -115,11 +135,30 @@ rule average_bedgraphs:
         "../scripts/average_bedgraph.py"
 
 
+# Sort averagre BedGraph files
+# -----------------------------------------------------
+rule sort_bedgraph:
+    input:
+        bg="results/temp/{condition}.bg",
+    output:
+        bg="results/bismark/{condition}.bg",
+    log:
+        "logs/sort_bedgraph/{condition}.log",
+    threads: 1
+    resources:
+        runtime=30,
+        mem_mb=2000,
+    conda:
+        "../envs/deeptools.yaml"
+    shell:
+        "LC_ALL=C sort -k1,1 -k2,2n {input.bg} > {output.bg}"
+
+
 # Convert average BedGraph to BigWig
 # -----------------------------------------------------
 rule average_bedgraph_to_bigwig:
     input:
-        bg="results/bismark/{condition}_average_deduplicated.bedGraph",
+        bg="results/bismark/{condition}.bg",
         cs="resources/chrom_sizes.txt",
     output:
         "results/bigwig/{condition}.bw",
