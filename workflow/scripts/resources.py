@@ -58,7 +58,7 @@ class Resources:
         
         # Control fasta from NEB GitHub
         # https://github.com/FelixKrueger/Bismark/issues/166#issuecomment-378349782
-        self.control_fasta_url = "https://raw.githubusercontent.com/nebiolabs/EM-seq/refs/heads/master/methylation_controls.fa"
+        self.control_fasta_url = "https://raw.githubusercontent.com/nebiolabs/EM-seq/refs/heads/master/assets/methylation_controls.fa"
         self.control_fasta = self._file_from_url(self.control_fasta_url)
 
     def _file_from_url(self, url):
