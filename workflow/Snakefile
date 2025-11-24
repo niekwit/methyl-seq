@@ -11,6 +11,7 @@ SAMPLES = import_samples(PAIRED_END)
 CSV = pd.read_csv("config/samples.csv")
 CONDITIONS = conditions(CSV)
 REGIONS = regions()
+#META_REGIONS = meta_regions()
 
 # Load rules
 # -----------------------------------------------------
@@ -20,6 +21,7 @@ include: "rules/resources.smk"
 include: "rules/bigwig.smk"
 include: "rules/process_methylation_calls.smk"
 include: "rules/boxplot.smk"
+#include: "rules/metaplot.smk"
 
 
 # -----------------------------------------------------

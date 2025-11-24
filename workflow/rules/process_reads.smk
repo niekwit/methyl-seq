@@ -12,7 +12,7 @@ if PAIRED_END:
             report_rev="logs/trim_galore_pe/{sample}_R2_trimming_report.txt",
         threads: 4
         resources: 
-            runtime=120,
+            runtime=180,
             mem_mb=20000,
             tmpdir=config["temp_dir"],
         params:
@@ -35,9 +35,10 @@ if PAIRED_END:
             outdir=lambda wc, output: os.path.dirname(output.bam),
         log:
             "logs/bismark_align/{sample}.log",
-        threads: 12
+        threads: 20
         resources:
             runtime=2000,
+            mem_mb=60000,
         conda:
             "../envs/bismark.yaml"
         shell:
@@ -60,7 +61,7 @@ else:
         params:
             extra=f"--illumina -q 20 {config["trim_galore_args"]}",
         resources: 
-            runtime=120,
+            runtime=180,
             mem_mb=20000,
             tmpdir=config["temp_dir"],
         log:

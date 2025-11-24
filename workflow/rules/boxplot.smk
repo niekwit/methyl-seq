@@ -58,7 +58,7 @@ rule filter_cpg_probes_for_regions:
         probes="resources/filtered_cpg_probes.bed",
         regions="bed/{region}.bed",
     output:
-        region_probes=temp("resources/cpg_probes_{region}.bed"),
+        region_probes="resources/cpg_probes_{region}.bed",
     log:
         "logs/resources/filter_probes_{region}.log",
     threads: 1
@@ -78,7 +78,7 @@ rule boxplot_data:
         probes="resources/cpg_probes_{region}.bed",
         meth="results/bed/CpG_merged_{condition}.bed",
     output:
-        temp("results/boxplot/CpG_methylation_{condition}_{region}.txt"),
+        "results/boxplot/CpG_methylation_{condition}_{region}.txt",
     log:
         "logs/score_methylation_calls/boxplot_{condition}_{region}.log",
     threads: 1
@@ -126,6 +126,7 @@ rule plot_boxplot:
         "results/boxplot/CpG_methylation_all_conditions_all_regions.txt",
     output:
         pdf="results/plots/boxplots.pdf",
+        csv="results/plots/boxplots_data.csv",
     params:
         regions=REGIONS,
     log:

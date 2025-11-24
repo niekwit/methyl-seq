@@ -51,7 +51,7 @@ rule merge_strand_methylation_calls_to_bed:
         ot="results/bed/CpG_OT_{condition}.bed",
         ob="results/bed/CpG_OB_{condition}.bed",
     output:
-        bed=temp("results/bed/CpG_merged_{condition}.bed"),
+        bed="results/bed/CpG_merged_{condition}.bed",
     log:
         "logs/methylation_calls_to_bed/merge_{condition}.log",
     threads: 2
@@ -60,4 +60,5 @@ rule merge_strand_methylation_calls_to_bed:
     conda:
         "../envs/bismark.yaml"
     shell:
-        "cat {input.ot} {input.ob} | sort -k1,1 -k2,2n > {output.bed}"
+        "cat {input.ot} {input.ob} | sort -k1,1 -k2,2n > {output.bed} 2> {log}"
+

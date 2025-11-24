@@ -101,3 +101,6 @@ ggsave(
   width = 6,
   height = 4,
 )
+
+# Save data to csv
+write.csv(df, file = snakemake@output[["csv"]], row.names = FALSE)

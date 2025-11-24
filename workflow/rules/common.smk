@@ -29,7 +29,17 @@ def targets():
 
     if config["boxplot"]["plot"]:
         targets.append("results/plots/boxplots.pdf")
-
+    '''
+    if config["metaplot"]["plot"]:
+        # targets.append("results/plots/metaplots.pdf")
+        targets.extend(
+            expand(
+                "results/metaplot/{condition}_{meta_region}.bg",
+                condition=CONDITIONS,
+                meta_region=META_REGIONS,
+            )
+        )
+    '''
     return targets
 
 
@@ -87,10 +97,16 @@ def regions():
         # Create empty bed file for whole genome
         with open("bed/whole.genome.bed", "w") as f:
             f.write("")
-        
+
         return ["whole.genome"] + list(regions.keys())
     else:
         raise ValueError("No regions defined in config file under boxplot:regions")
 
 
-
+def meta_regions():
+    regions = config["metaplot"].get("regions", None)
+    # Get keys of regions dict
+    if regions:
+        return list(regions.keys())
+    else:
+        raise ValueError("No regions defined in config file under metaplot:regions")
