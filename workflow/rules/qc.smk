@@ -1,28 +1,32 @@
-# make QC report
+# Make QC report of raw data
 # -----------------------------------------------------
 rule fastqc:
     input:
-        fastq="results/simulate_reads/{sample}.bwa.{read}.fastq.gz",
+        fastq="reads/{sample}_{read}_001.fastq.gz",
     output:
-        html="results/fastqc/{sample}.bwa.{read}_fastqc.html",
-        zip="results/fastqc/{sample}.bwa.{read}_fastqc.zip",
+        html="results/fastqc/{sample}_{read}_fastqc.html",
+        zip="results/fastqc/{sample}_{read}_fastqc.zip",
     params:
         extra="--quiet",
+        mem_overhead_factor=0.1,
     log:
-        "results/fastqc/{sample}.bwa.{read}.log",
+        "results/fastqc/{sample}_{read}.log",
     threads: 4
+    resources:
+        mem_mb = 1024,
+        runtime = 30,
     wrapper:
-        "v6.0.0/bio/fastqc"
+        "v7.6.0/bio/fastqc"
 
 
-# run multiQC on tool output
+# Run multiQC on FastQC output
 # -----------------------------------------------------
 rule multiqc:
     input:
         expand(
-            "results/fastqc/{sample}.bwa.{read}_fastqc.{ext}",
+            "results/fastqc/{sample}_{read}_fastqc.zip",
             sample=SAMPLES,
-            read=["read1", "read2"],
+            read=["R1", "R2"],
             ext=["html", "zip"],
         ),
     output:
@@ -32,7 +36,7 @@ rule multiqc:
     log:
         "results/multiqc/multiqc.log",
     wrapper:
-        "v6.0.0/bio/multiqc"
+        "v8.1.1/bio/multiqc"
 
 
 # Create control CpG coverage files
@@ -87,3 +91,49 @@ rule plot_methylation_conversion_rate:
         "../envs/R.yaml"
     script:
         "../scripts/plot_methylation_conversion_rate.R"
+
+
+if PAIRED_END:
+    # Sort non-duplicated BAM files
+    # -----------------------------------------------------
+    rule sort_deduplicated_bam:
+        input:
+            "results/bismark/{sample}/{sample}_R1_bismark_bt2_pe.bam",
+        output:
+            temp("results/bismark/{sample}/{sample}.deduplicated.sorted.bam"),
+        log:
+            "logs/sort_deduplicated_bam/{sample}.log",
+        threads: 4
+        resources:
+            runtime=45,
+        wrapper:
+            "v9.0.0/bio/samtools/sort"
+
+    # Analyse sequencing depth with preseq
+    # -----------------------------------------------------
+    rule preseq_lc_extrap_bam:
+        input:
+            "results/bismark/{sample}/{sample}.deduplicated.sorted.bam",
+        output:
+            "results/preseq/{sample}.txt",
+        params:
+            "-v"   #optional parameters
+        log:
+            "logs/preseq/{sample}.log",
+        wrapper:
+            "v2.10.0/bio/preseq/lc_extrap"
+
+# Plot preseq results
+# -----------------------------------------------------
+rule plot_preseq:
+    input:
+        preseq=expand("results/preseq/{sample}.txt", sample=SAMPLES),
+    output:
+        pdf=expand("results/plots/library_complexity/{sample}.pdf", sample=SAMPLES),
+    log:
+        "logs/plot_preseq.log",
+    threads: 2
+    conda:
+        "../envs/R.yaml"
+    script:
+        "../rules/plot_preseq.R"
