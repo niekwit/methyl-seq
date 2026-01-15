@@ -6,6 +6,7 @@ sink(log, type = "message")
 
 library(tidyverse)
 library(cowplot)
+library(scales)
 
 preseq_files <- snakemake@input[["preseq"]]
 pdf_files <- snakemake@output[["pdf"]]
@@ -113,3 +114,12 @@ for (file in preseq_files) {
     )
   )
 }
+
+# Save summary table
+write.table(
+  df %>% arrange(sample),
+  file = snakemake@output[["summary"]],
+  sep = "\t",
+  row.names = FALSE,
+  quote = FALSE
+)

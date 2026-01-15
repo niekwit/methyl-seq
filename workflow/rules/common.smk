@@ -26,6 +26,7 @@ def targets():
         "results/plots/methylation_conversion_rate.csv",
         "results/plots/methylation_conversion_rate.pdf",
         expand("results/plots/library_complexity/{sample}.pdf", sample=SAMPLES),
+        "results/preseq/library_complexity_summary.txt",
         "results/multiqc/multiqc_report.html",
     ]
 
