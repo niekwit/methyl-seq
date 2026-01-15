@@ -25,21 +25,13 @@ def targets():
         expand("results/bigwig/{condition}.bw", condition=CONDITIONS),
         "results/plots/methylation_conversion_rate.csv",
         "results/plots/methylation_conversion_rate.pdf",
+        expand("results/plots/library_complexity/{sample}.pdf", sample=SAMPLES),
+        "results/multiqc/multiqc_report.html",
     ]
 
     if config["boxplot"]["plot"]:
         targets.append("results/plots/boxplots.pdf")
-    '''
-    if config["metaplot"]["plot"]:
-        # targets.append("results/plots/metaplots.pdf")
-        targets.extend(
-            expand(
-                "results/metaplot/{condition}_{meta_region}.bg",
-                condition=CONDITIONS,
-                meta_region=META_REGIONS,
-            )
-        )
-    '''
+
     return targets
 
 
