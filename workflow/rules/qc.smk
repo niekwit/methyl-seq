@@ -130,10 +130,11 @@ rule plot_preseq:
         preseq=expand("results/preseq/{sample}.txt", sample=SAMPLES),
     output:
         pdf=expand("results/plots/library_complexity/{sample}.pdf", sample=SAMPLES),
+        summary="results/preseq/library_complexity_summary.txt",
     log:
         "logs/plot_preseq.log",
     threads: 2
     conda:
         "../envs/R.yaml"
     script:
-        "../rules/plot_preseq.R"
+        "../scripts/plot_preseq.R"
