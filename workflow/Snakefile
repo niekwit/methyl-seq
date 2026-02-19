@@ -2,9 +2,11 @@
 # -----------------------------------------------------
 configfile: "config/config.yaml"
 
+VERSION = "0.6.0"
 
 include: "rules/common.smk"
 
+containerized: f"docker://niekwit/methyl-seq:{VERSION}"
 
 PAIRED_END = paired_end()
 SAMPLES = import_samples(PAIRED_END)
