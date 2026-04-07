@@ -2,15 +2,18 @@
 # -----------------------------------------------------
 configfile: "config/config.yaml"
 
-VERSION = "0.6.0"
+VERSION = "v0.6.0"
 
 include: "rules/common.smk"
+
+check_cwd_no_spaces()
 
 containerized: f"docker://niekwit/methyl-seq:{VERSION}"
 
 PAIRED_END = paired_end()
 SAMPLES = import_samples(PAIRED_END)
 CSV = pd.read_csv("config/samples.csv")
+validate(CSV, schema="workflow/schemas/samples.schema.yaml")
 CONDITIONS = conditions(CSV)
 REGIONS = regions()
 #META_REGIONS = meta_regions()

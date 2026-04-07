@@ -7,25 +7,27 @@ from snakemake.logging import logger
 
 resources = Resources(config["genome"], config["ensembl_genome_build"])
 
-# validate sample sheet and config file
-# validate(samples, schema="schemas/samples.schema.yaml")
-# validate(config, schema="schemas/config.schema.yaml")
+
+def check_cwd_no_spaces():
+    cwd = os.path.abspath(os.getcwd())
+    if " " in cwd:
+        raise ValueError(
+            f"Working directory path contains spaces: '{cwd}'\n"
+            "Snakemake does not support paths with spaces. Please move the project to a path without spaces."
+        )
+
+# validate config file
+validate(config, schema="../schemas/config.schema.yaml")
 
 
 def targets():
     targets = [
         "results/plots/PCA.pdf",
-        expand(
-            "results/bismark/{sample}/{sample}.deduplicated.nucleotide_stats.txt",
-            sample=SAMPLES,
-        ),
-        expand(
-            "results/bismark/{sample}/{sample}.deduplicated.M-bias.txt", sample=SAMPLES
-        ),
+        #"results/multiqc/multiqc_bismark.html",
         expand("results/bigwig/{condition}.bw", condition=CONDITIONS),
+        #expand("results/bigwig/{condition}_coverage.bw", condition=CONDITIONS),
         "results/plots/methylation_conversion_rate.csv",
         "results/plots/methylation_conversion_rate.pdf",
-        expand("results/plots/library_complexity/{sample}.pdf", sample=SAMPLES),
         "results/preseq/library_complexity_summary.txt",
         "results/multiqc/multiqc_report.html",
     ]
