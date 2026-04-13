@@ -34,7 +34,7 @@ rule multiqc:
     params:
         extra="--verbose --dirs",
     log:
-        "results/multiqc/multiqc.log",
+        "logs/multiqc/fastqc.log",
     wrapper:
         "v8.1.1/bio/multiqc"
 
