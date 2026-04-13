@@ -1,12 +1,14 @@
 $schema: "https://json-schema.org/draft/2020-12/schema"
-description: entries for the sample sheet
+description: entries for the sample sheet (config/samples.csv)
 properties:
   sample:
     type: string
     description: sample name/identifier
+    pattern: "^[a-zA-Z0-9_]+$"
   condition:
     type: string
     description: sample condition that will be compared during differential analysis
+    pattern: "^[a-zA-Z0-9_]+$"
   replicate:
     type: integer
     default: 1
