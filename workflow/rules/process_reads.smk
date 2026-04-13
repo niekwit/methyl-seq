@@ -20,7 +20,7 @@ if PAIRED_END:
         log:
             "logs/trim_galore_pe/{sample}.log",
         wrapper:
-            "v7.2.0/bio/trim_galore/pe"
+            "v9.3.0/bio/trim_galore/pe"
 
     # Align reads with Bismark
     # -----------------------------------------------------
@@ -35,7 +35,7 @@ if PAIRED_END:
             outdir=lambda wc, output: os.path.dirname(output.bam),
         log:
             "logs/bismark_align/{sample}.log",
-        threads: 20
+        threads: 12
         resources:
             runtime=2000,
             mem_mb=60000,
@@ -67,7 +67,7 @@ else:
         log:
             "logs/trim_galore_se/{sample}.log",
         wrapper:
-            "v7.2.0/bio/trim_galore/se"
+            "v9.3.0/bio/trim_galore/se"
 
     # Align reads with Bismark
     # -----------------------------------------------------
@@ -130,8 +130,10 @@ rule methylation_extraction:
         bg="results/bismark/{sample}/{sample}.deduplicated.bedGraph.gz", #CpG only
         cpgot="results/bismark/{sample}/CpG_OT_{sample}.deduplicated.txt.gz",
         cpgob="results/bismark/{sample}/CpG_OB_{sample}.deduplicated.txt.gz",
+        cov="results/bismark/{sample}/{sample}.deduplicated.bismark.cov.gz",
     params:
         outdir=lambda wc, output: os.path.dirname(output.sreport),
+        genome_abs=os.path.abspath("resources/")
     log:
         "logs/methylation_extraction/{sample}.log"
     threads: 4
@@ -149,7 +151,7 @@ rule methylation_extraction:
         "--gzip "
         "--no_header "
         "--buffer_size 10G "
-        "--genome_folder resources/ "
+        "--genome_folder {params.genome_abs} "
         "--multicore {threads} "
         "{input.bam} "
         "2> {log}"
@@ -177,6 +179,20 @@ rule nucleotide_coverage:
         "--genome_folder resources/ "
         "{input.bam} "
         "2> {log}"
+
+rule multiqc_bismark:
+    input:
+        expand("results/bismark/{sample}/{sample}.deduplicated.nucleotide_stats.txt", sample=SAMPLES),
+    output:
+        "results/multiqc/multiqc_bismark.html",
+    log:
+        "logs/multiqc/bismark.log",
+    threads: 2
+    resources:
+        runtime=30,
+    wrapper:
+        "v8.1.1/bio/multiqc"
+
 
 '''
 rule summary_report:
