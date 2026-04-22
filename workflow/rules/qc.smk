@@ -2,15 +2,15 @@
 # -----------------------------------------------------
 rule fastqc:
     input:
-        fastq="reads/{sample}_{read}_001.fastq.gz",
+        fastq="reads/{sample}{read}.fastq.gz",
     output:
-        html="results/fastqc/{sample}_{read}_fastqc.html",
-        zip="results/fastqc/{sample}_{read}_fastqc.zip",
+        html="results/fastqc/{sample}{read}_fastqc.html",
+        zip="results/fastqc/{sample}{read}_fastqc.zip",
     params:
         extra="--quiet",
         mem_overhead_factor=0.1,
     log:
-        "results/fastqc/{sample}_{read}.log",
+        "results/fastqc/{sample}{read}.log",
     threads: 4
     resources:
         mem_mb = 1024,
@@ -24,9 +24,9 @@ rule fastqc:
 rule multiqc:
     input:
         expand(
-            "results/fastqc/{sample}_{read}_fastqc.zip",
+            "results/fastqc/{sample}{read}_fastqc.zip",
             sample=SAMPLES,
-            read=["R1", "R2"],
+            read=["_R1_001", "_R2_001"] if PAIRED_END else [""],
             ext=["html", "zip"],
         ),
     output:
@@ -99,6 +99,21 @@ if PAIRED_END:
     rule sort_deduplicated_bam:
         input:
             "results/bismark/{sample}/{sample}_R1_bismark_bt2_pe.bam",
+        output:
+            temp("results/bismark/{sample}/{sample}.deduplicated.sorted.bam"),
+        log:
+            "logs/sort_deduplicated_bam/{sample}.log",
+        threads: 4
+        resources:
+            runtime=45,
+        wrapper:
+            "v9.0.0/bio/samtools/sort"
+else:
+    # Sort non-duplicated BAM files
+    # -----------------------------------------------------
+    rule sort_deduplicated_bam:
+        input:
+            "results/bismark/{sample}/{sample}_bismark_bt2.bam",
         output:
             temp("results/bismark/{sample}/{sample}.deduplicated.sorted.bam"),
         log:
