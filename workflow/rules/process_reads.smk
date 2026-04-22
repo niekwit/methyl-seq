@@ -30,7 +30,7 @@ if PAIRED_END:
             r1="results/trimmed/{sample}_R1.fq.gz",
             r2="results/trimmed/{sample}_R2.fq.gz",
         output:
-            bam=temp("results/bismark/{sample}/{sample}_R1_bismark_bt2_pe.bam"),
+            bam="results/bismark/{sample}/{sample}_R1_bismark_bt2_pe.bam",
         params:
             outdir=lambda wc, output: os.path.dirname(output.bam),
         log:
@@ -76,7 +76,7 @@ else:
             dir="resources/Bisulfite_Genome",
             fq="results/trimmed/{sample}.fq.gz",
         output:
-            bam=temp("results/bismark/{sample}/{sample}_bismark_bt2.bam"),
+            bam="results/bismark/{sample}/{sample}_bismark_bt2.bam",
         params:
             outdir=lambda wc, output: os.path.dirname(output.bam),
         log:
