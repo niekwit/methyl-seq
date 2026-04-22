@@ -13,7 +13,7 @@ containerized: f"docker://niekwit/methyl-seq:{VERSION}"
 PAIRED_END = paired_end()
 SAMPLES = import_samples(PAIRED_END)
 CSV = pd.read_csv("config/samples.csv")
-validate(CSV, schema="workflow/schemas/samples.schema.yaml")
+validate(CSV, schema="schemas/samples.schema.yaml")
 CONDITIONS = conditions(CSV)
 REGIONS = regions()
 #META_REGIONS = meta_regions()
