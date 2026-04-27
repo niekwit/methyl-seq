@@ -103,6 +103,7 @@ rule deduplication:
         bam="results/bismark/{sample}/{sample}.deduplicated.bam",
     params:
         outdir=lambda wc, output: os.path.dirname(output.bam),
+        paired="--paired" if PAIRED_END else "",
     log:
         "logs/deduplication/{sample}.log",
     threads: 4
@@ -112,7 +113,7 @@ rule deduplication:
         "../envs/bismark.yaml"
     shell:
         "deduplicate_bismark "
-        "--paired "
+        "{params.paired} "
         "--outfile {wildcards.sample} "
         "--output_dir {params.outdir} "
         "--bam "
@@ -133,7 +134,8 @@ rule methylation_extraction:
         cov="results/bismark/{sample}/{sample}.deduplicated.bismark.cov.gz",
     params:
         outdir=lambda wc, output: os.path.dirname(output.sreport),
-        genome_abs=os.path.abspath("resources/")
+        genome_abs=os.path.abspath("resources/"),
+        paired="--paired-end" if PAIRED_END else "",
     log:
         "logs/methylation_extraction/{sample}.log"
     threads: 4
@@ -143,7 +145,7 @@ rule methylation_extraction:
         "../envs/bismark.yaml"
     shell:
         "bismark_methylation_extractor "
-        "--paired-end "
+        "{params.paired} "
         "--no_overlap "
         "--output_dir {params.outdir} "
         "--bedgraph "
