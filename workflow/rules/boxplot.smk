@@ -4,6 +4,7 @@ rule filter_cpg_probes_for_reads:
     input:
         cpg="resources/cpg_probes.bed",
         meth="results/bed/CpG_merged_{condition}.bed",
+        cs="resources/chrom_sizes.txt",
     output:
         temp("results/bed/CpG_probes_{condition}_filtered.txt"),
     log:
@@ -15,7 +16,8 @@ rule filter_cpg_probes_for_reads:
     conda:
         "../envs/deeptools.yaml"
     shell:
-        "bedtools intersect -wa -wb -sorted -a {input.cpg} -b {input.meth} | "
+        "bedtools intersect -wa -wb -sorted "
+        "-a {input.cpg} -b {input.meth} -g {input.cs} | "
         "cut -f4,8 | "
         "sort -k 1,1 -k2,2n | "
         "uniq | "
