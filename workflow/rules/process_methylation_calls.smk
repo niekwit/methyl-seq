@@ -46,6 +46,26 @@ rule OB_methylation_calls_to_bed:
 
 # Merge CpG methylation calls of OT and OB to a single BED file
 # -----------------------------------------------------
+"""
+Performs a memory-efficient, genome-ordered sort and merge of BED files.
+
+This command avoids the high RAM overhead of `bedtools sort` on large datasets 
+(>20GB) by using a streaming Unix sort strategy:
+1. Awk creates a numeric 'rank' lookup from the chrom_sizes file.
+2. Input BED lines are prepended with this rank, effectively mapping 
+   non-alphanumeric chromosome orders (e.g., MT, X, Y) to 
+   integers.
+3. Unix sort performs a parallelized, disk-buffered numeric sort on the 
+   rank and start positions.
+4. The temporary rank prefix is removed to restore standard BED format.
+
+Constraints:
+- Chromosomes in the BED file missing from the chrom_sizes file will 
+  be filtered out.
+- Memory usage is strictly controlled by the -S flag.
+"""
+
+
 rule merge_strand_methylation_calls_to_bed:
     input:
         ot="results/bed/CpG_OT_{condition}.bed",
@@ -55,12 +75,21 @@ rule merge_strand_methylation_calls_to_bed:
         bed="results/bed/CpG_merged_{condition}.bed",
     log:
         "logs/methylation_calls_to_bed/merge_{condition}.log",
-    threads: 2
+    params:
+        tmpdir=config["temp_dir"],
+    threads: 8
     resources:
-        runtime=60,
+        runtime=120,
+        mem_mb=12000,
     conda:
         "../envs/deeptools.yaml"
     shell:
-        "cat {input.ot} {input.ob} | "
-        "bedtools sort -i - -g {input.cs} > {output.bed} 2> {log}"
-
+        """
+        (cat {input.ot} {input.ob} | \
+        awk 'NR==FNR {{ rank[$1]=NR; next }} ($1 in rank) {{ print rank[$1], $0 }}' {input.cs} - | \
+        sort -k1,1n -k3,3n \
+            --parallel={threads} \
+            -S {resources.mem_mb}M \
+            -T {params.tmpdir} | \
+        cut -d' ' -f2- > {output.bed}) 2> {log}
+        """
