@@ -59,6 +59,7 @@ rule filter_cpg_probes_for_regions:
     input:
         probes="resources/filtered_cpg_probes.bed",
         regions="bed/{region}.bed",
+        chrom_sizes="resources/chrom_sizes.txt",
     output:
         region_probes="resources/cpg_probes_{region}.bed",
     log:
