@@ -2,7 +2,7 @@
 # -----------------------------------------------------
 rule filter_cpg_probes_for_reads:
     input:
-        cpg="resources/cpg_probes.bed",
+        cpg="resources/cpg_probes_sorted.bed",
         meth="results/bed/CpG_merged_{condition}.bed",
         cs="resources/chrom_sizes.txt",
     output:

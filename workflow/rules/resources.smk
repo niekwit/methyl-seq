@@ -136,6 +136,26 @@ rule create_cpg_probes:
     shell:
         "python workflow/scripts/create_cpg_probes.py {input} {output} {params.n} {log}"
 
+
+# Sort CpG probe BED file using chrom sizes
+# -----------------------------------------------------
+rule sort_cpg_probes:
+    input:
+        probes="resources/cpg_probes.bed",
+        cs="resources/chrom_sizes.txt",
+    output:
+        "resources/cpg_probes_sorted.bed",
+    log:
+        "logs/resources/sort_cpg_probes.log",
+    threads: 1
+    resources:
+        runtime=15,
+        mem_mb=2000,
+    conda:
+        "../envs/deeptools.yaml"
+    shell:
+        "bedtools sort -i {input.probes} -g {input.cs} > {output} 2> {log}"
+
 '''
 # Extend bed regions by a number of bases on each side
 # -----------------------------------------------------

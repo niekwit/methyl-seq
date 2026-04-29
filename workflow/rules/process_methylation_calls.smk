@@ -50,6 +50,7 @@ rule merge_strand_methylation_calls_to_bed:
     input:
         ot="results/bed/CpG_OT_{condition}.bed",
         ob="results/bed/CpG_OB_{condition}.bed",
+        cs="resources/chrom_sizes.txt",
     output:
         bed="results/bed/CpG_merged_{condition}.bed",
     log:
@@ -58,7 +59,8 @@ rule merge_strand_methylation_calls_to_bed:
     resources:
         runtime=60,
     conda:
-        "../envs/bismark.yaml"
+        "../envs/deeptools.yaml"
     shell:
-        "cat {input.ot} {input.ob} | sort -k1,1 -k2,2n > {output.bed} 2> {log}"
+        "cat {input.ot} {input.ob} | "
+        "bedtools sort -i - -g {input.cs} > {output.bed} 2> {log}"
 
