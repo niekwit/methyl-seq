@@ -4,10 +4,20 @@ channels:
   - bioconda
   - nodefaults
 dependencies:
-  - r-base=4.4
+  - r-base=4.5
   - r-tidyverse=2.0.0
   - r-cowplot=1.2.0
   - r-rcolorbrewer
   - r-ggrepel=0.9.6
   - r-scales=1.4.0
   - r-data.table=1.17.8
+  - r-gprofiler2=0.2.4
+  - bioconductor-methylkit=1.36.0
+  - bioconductor-genomicranges=1.62.1
+  - bioconductor-chipseeker=1.46.1
+  - bioconductor-txdb.mmusculus.ucsc.mm39.knowngene=3.22.0
+  - bioconductor-txdb.hsapiens.ucsc.hg38.knowngene=3.22.0
+  - bioconductor-org.mm.eg.db=3.22.0
+  - bioconductor-org.hs.eg.db=3.22.0
+  - bioconductor-genomeinfodb=1.46.2
+  - bioconductor-rtracklayer=1.70.1
