@@ -1,6 +1,6 @@
 FROM condaforge/miniforge3:latest
 LABEL io.github.snakemake.containerized="true"
-LABEL io.github.snakemake.conda_env_hash="f705961e1d893a1b9d5c99b097fb5eea1a614f3e38a93153dc40b8891ce4d9d5"
+LABEL io.github.snakemake.conda_env_hash="e1ed4ac1dac742800ba3ab38340aa07df2db0e8957c843e4afcf86e901dce2b2"
 
 # Step 2: Retrieve conda environments
 
@@ -83,22 +83,31 @@ ADD https://github.com/snakemake/snakemake-wrappers/raw/v9.4.2/bio/seqkit/enviro
 
 # Conda environment:
 #   source: workflow/envs/R.yaml
-#   prefix: /conda-envs/b1e5f7e50783d0a664cdf5d4cf9ff01f
+#   prefix: /conda-envs/2cc4ffe5c56a590c920e5ff38dbcbd58
 #   name: R
 #   channels:
 #     - conda-forge
 #     - bioconda
 #     - nodefaults
 #   dependencies:
-#     - r-base=4.4
+#     - r-base=4.5
 #     - r-tidyverse=2.0.0
 #     - r-cowplot=1.2.0
 #     - r-rcolorbrewer
 #     - r-ggrepel=0.9.6
 #     - r-scales=1.4.0
 #     - r-data.table=1.17.8
-RUN mkdir -p /conda-envs/b1e5f7e50783d0a664cdf5d4cf9ff01f
-COPY workflow/envs/R.yaml /conda-envs/b1e5f7e50783d0a664cdf5d4cf9ff01f/environment.yaml
+#     - r-gprofiler2=0.2.4
+#     - bioconductor-methylkit=1.36.0
+#     - bioconductor-genomicranges=1.62.1
+#     - bioconductor-chipseeker=1.46.1
+#     - bioconductor-txdb.mmusculus.ucsc.mm39.knowngene=3.22.0
+#     - bioconductor-txdb.hsapiens.ucsc.hg38.knowngene=3.22.0
+#     - bioconductor-org.mm.eg.db=3.22.0
+#     - bioconductor-org.hs.eg.db=3.22.0
+#     - bioconductor-genomeinfodb=1.46.2
+RUN mkdir -p /conda-envs/2cc4ffe5c56a590c920e5ff38dbcbd58
+COPY workflow/envs/R.yaml /conda-envs/2cc4ffe5c56a590c920e5ff38dbcbd58/environment.yaml
 
 # Conda environment:
 #   source: workflow/envs/bismark.yaml
@@ -142,7 +151,7 @@ RUN conda env create --prefix /conda-envs/dbf6d01858bf329ddb05cf98bd61f111 --fil
     conda env create --prefix /conda-envs/5e89b2a5d29ff7b7f49c8dc9669267b4 --file /conda-envs/5e89b2a5d29ff7b7f49c8dc9669267b4/environment.yaml && \
     conda env create --prefix /conda-envs/9a44d3e05abb1b2d4bbef33d61bf314d --file /conda-envs/9a44d3e05abb1b2d4bbef33d61bf314d/environment.yaml && \
     conda env create --prefix /conda-envs/f008bd698a6714e6623cc359e3d3e6b1 --file /conda-envs/f008bd698a6714e6623cc359e3d3e6b1/environment.yaml && \
-    conda env create --prefix /conda-envs/b1e5f7e50783d0a664cdf5d4cf9ff01f --file /conda-envs/b1e5f7e50783d0a664cdf5d4cf9ff01f/environment.yaml && \
+    conda env create --prefix /conda-envs/2cc4ffe5c56a590c920e5ff38dbcbd58 --file /conda-envs/2cc4ffe5c56a590c920e5ff38dbcbd58/environment.yaml && \
     conda env create --prefix /conda-envs/e254bd4b0d07081bedb140ad007ad7ca --file /conda-envs/e254bd4b0d07081bedb140ad007ad7ca/environment.yaml && \
     conda env create --prefix /conda-envs/d6dfe6c4ba9fc3e1d2289533b5e5696e --file /conda-envs/d6dfe6c4ba9fc3e1d2289533b5e5696e/environment.yaml && \
     conda clean --all -y
