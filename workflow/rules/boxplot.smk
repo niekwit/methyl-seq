@@ -80,6 +80,7 @@ rule boxplot_data:
     input:
         probes="resources/cpg_probes_{region}.bed",
         meth="results/bed/CpG_merged_{condition}.bed",
+        cs="resources/chrom_sizes.txt",
     output:
         "results/boxplot/CpG_methylation_{condition}_{region}.txt",
     log:
@@ -91,7 +92,7 @@ rule boxplot_data:
     conda:
         "../envs/deeptools.yaml"
     shell:
-        "bedtools intersect -sorted -wa -wb -a {input.probes} -b {input.meth} | "
+        "bedtools intersect -sorted -wa -wb -a {input.probes} -b {input.meth} -g {input.cs} | "
         "cut -f4,9 | "
         "sort -k1,1 -k2,2n | "
         "uniq -c | "
