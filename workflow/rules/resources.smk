@@ -14,6 +14,21 @@ rule get_genome_fasta:
         "pigz -d -c {output}.gz > {output}"
 
 
+rule filter_fasta:
+    input:
+        fastx=resources.fasta,
+    output:
+        fastx=resources.filtered_fasta,
+    log:
+        "logs/seqkit/filter_fasta.log",
+    params:
+        command="grep",
+        extra="-r -p '^([0-9]+|X|Y|MT)$'", # keep only standard chromosomes
+    threads: 2
+    wrapper:
+        "v9.4.2/bio/seqkit"
+
+
 rule get_control_fasta:
     output:
         resources.control_fasta,
@@ -31,7 +46,7 @@ rule get_control_fasta:
 
 rule combine_fasta:
     input:
-        genome=resources.fasta,
+        genome=resources.filtered_fasta,
         control=resources.control_fasta,
     output:
         "resources/combined_genome.fa",
@@ -101,7 +116,7 @@ rule bismark_genome_preparation:
 # -----------------------------------------------------
 rule find_cpgs:
     input:
-        resources.fasta,
+        resources.filtered_fasta,
     output:
         "resources/cpg_sites.bed",
     log:

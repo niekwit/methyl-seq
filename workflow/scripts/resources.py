@@ -54,8 +54,9 @@ class Resources:
 
         # Downloaded unzipped file names
         self.fasta = self._file_from_url(self.fasta_url)
+        self.filtered_fasta = self._filtered_fasta_from_url(self.fasta_url)
         self.gtf = self._file_from_url(self.gtf_url)
-        
+
         # Control fasta from NEB GitHub
         # https://github.com/FelixKrueger/Bismark/issues/166#issuecomment-378349782
         self.control_fasta_url = "https://raw.githubusercontent.com/nebiolabs/EM-seq/refs/heads/master/assets/methylation_controls.fa"
@@ -64,3 +65,7 @@ class Resources:
     def _file_from_url(self, url):
         """Returns file path for unzipped downloaded file"""
         return f"resources/downloaded_fasta/{os.path.basename(url).replace('.gz','')}"
+
+    def _filtered_fasta_from_url(self, url):
+        """Returns file path for unzipped downloaded file"""
+        return f"resources/downloaded_fasta/{os.path.basename(url).replace('.fa.gz','_filtered.fa')}"
