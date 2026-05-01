@@ -2,7 +2,7 @@
 # -----------------------------------------------------
 configfile: "config/config.yaml"
 
-VERSION = "v0.6.0"
+VERSION = "0.6.0"
 
 include: "rules/common.smk"
 
@@ -26,6 +26,7 @@ include: "rules/resources.smk"
 include: "rules/bigwig.smk"
 include: "rules/process_methylation_calls.smk"
 include: "rules/boxplot.smk"
+include: "rules/dmrs.smk"
 #include: "rules/metaplot.smk"
 
 
