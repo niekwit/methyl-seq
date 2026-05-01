@@ -3,7 +3,10 @@
 REGION=${snakemake_wildcards[region]}
 
 if [ "$REGION" == "whole.genome" ]; then
-	cp "${snakemake_input[probes]}" "${snakemake_output[region_probes]}"
+	# Filter to chromosomes present in chrom_sizes and sort to match genome order,
+	# so bedtools intersect -sorted -g is satisfied downstream
+	grep -Fwf <(cut -f1 "${snakemake_input[chrom_sizes]}") "${snakemake_input[probes]}" | \
+		bedtools sort -g "${snakemake_input[chrom_sizes]}" > "${snakemake_output[region_probes]}"
 else
 	bedtools intersect -sorted -wa \
 		-a "${snakemake_input[probes]}" \
