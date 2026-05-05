@@ -24,7 +24,7 @@ rule filter_fasta:
     params:
         command="grep",
         extra="-r -p '^([0-9]+|X|Y|MT)$'", # keep only standard chromosomes
-    threads: 2
+    threads: 4
     wrapper:
         "v9.4.2/bio/seqkit"
 
