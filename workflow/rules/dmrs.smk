@@ -11,6 +11,7 @@ rule identify_dmrs:
         diff_tiles="results/dmrs/differential_methylation_tiles.rds",
         sign_diff_tiles="results/dmrs/significant_differential_methylation_tiles.rds",
     params:
+        samples=SAMPLES,
         tile_size=config["DMR"]["tile_size"],
         step_size=config["DMR"]["step_size"],
         min_per_group=config["DMR"]["min_per_group"],

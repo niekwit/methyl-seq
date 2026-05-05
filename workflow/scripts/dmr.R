@@ -14,7 +14,7 @@ cpgot_files <- snakemake@input[["cpgot"]]
 cpgob_files <- snakemake@input[["cpgob"]]
 
 # Get paramaters from Snakemake
-samples <- snakemake@wildcards[["samples"]]
+samples <- snakemake@params[["samples"]]
 reference_condition <- snakemake@params[["ref_cond"]]
 genome <- snakemake@config[["genome"]]
 tile_size <- snakemake@params[["tile_size"]]
@@ -99,7 +99,7 @@ meth_list <- mapply(
 
 # Create a vector that contains 1 or 0 for each sample,
 # indicating whether it belongs to the reference condition or not
-ref_vector <- ifelse(str_detect(samples, reference_condition), 1, 0)
+ref_vector <- as.integer(str_detect(samples, reference_condition))
 
 # Create the methylRawList
 methylobj <- new("methylRawList", meth_list, treatment = ref_vector)
