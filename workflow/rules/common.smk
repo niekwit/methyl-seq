@@ -44,7 +44,8 @@ def targets():
             "results/plots/dmrs/DMR_genomic_distribution.pdf",
             "results/plots/dmrs/DMR_volcano.pdf",
             "results/dmrs/all_methylation_tiles.rds",
-            "results/dmrs/significant_methylation_tiles.rds",
+            "results/dmrs/differential_methylation_tiles.rds",
+            "results/dmrs/significant_differential_methylation_tiles.rds",
         ])
 
     return targets
