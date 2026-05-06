@@ -23,7 +23,7 @@ rule filter_fasta:
         "logs/seqkit/filter_fasta.log",
     params:
         command="grep",
-        extra="-r -p '^([0-9]+|X|Y|MT)$'", # keep only standard chromosomes
+        extra="-r -p '^([0-9]+|X|Y|MT)$'",  # keep only standard chromosomes
     threads: 4
     wrapper:
         "v9.4.2/bio/seqkit"
@@ -71,7 +71,7 @@ rule index_fasta:
         "../envs/bismark.yaml"
     shell:
         "samtools faidx {input} 2> {log}"
-    
+
 
 rule chrom_sizes:
     input:
@@ -100,10 +100,10 @@ rule bismark_genome_preparation:
     input:
         fasta="resources/combined_genome.fa",
     output:
-        directory("resources/Bisulfite_Genome")
+        directory("resources/Bisulfite_Genome"),
     log:
-        "logs/resources/bismark_genome_preparation.log"
-    threads: 40 # make sure to assign half of this to bismark
+        "logs/resources/bismark_genome_preparation.log",
+    threads: 40  # make sure to assign half of this to bismark
     resources:
         runtime=360,
         mem_mb=60000,
@@ -111,6 +111,7 @@ rule bismark_genome_preparation:
         "../envs/bismark.yaml"
     script:
         "../scripts/bismark_genome_preparation.py"
+
 
 # Annotate CpGs in the genome
 # -----------------------------------------------------
@@ -129,6 +130,7 @@ rule find_cpgs:
         "../envs/deeptools.yaml"
     shell:
         "python workflow/scripts/find_cpgs.py {input} {output} {log}"
+
 
 # Create CpG probe BED file
 # -----------------------------------------------------
@@ -171,7 +173,8 @@ rule sort_cpg_probes:
     shell:
         "bedtools sort -i {input.probes} -g {input.cs} > {output} 2> {log}"
 
-'''
+
+"""
 # Extend bed regions by a number of bases on each side
 # -----------------------------------------------------
 rule extend_bed_regions:
@@ -195,4 +198,4 @@ rule extend_bed_regions:
         "bedtools slop -i stdin "
         "-g {input.cs} "
         "-b {params.extend_with} > {output.extended_bed} 2> {log}"
-'''
+"""

@@ -2,13 +2,18 @@
 # -----------------------------------------------------
 configfile: "config/config.yaml"
 
+
 VERSION = "0.6.0"
+
 
 include: "rules/common.smk"
 
+
 check_cwd_no_spaces()
 
+
 containerized: f"docker://niekwit/methyl-seq:{VERSION}"
+
 
 PAIRED_END = paired_end()
 SAMPLES = import_samples(PAIRED_END)
@@ -16,7 +21,8 @@ CSV = pd.read_csv("config/samples.csv")
 validate(CSV, schema="schemas/samples.schema.yaml")
 CONDITIONS = conditions(CSV)
 REGIONS = regions()
-#META_REGIONS = meta_regions()
+# META_REGIONS = meta_regions()
+
 
 # Load rules
 # -----------------------------------------------------
@@ -27,7 +33,9 @@ include: "rules/bigwig.smk"
 include: "rules/process_methylation_calls.smk"
 include: "rules/boxplot.smk"
 include: "rules/dmrs.smk"
-#include: "rules/metaplot.smk"
+
+
+# include: "rules/metaplot.smk"
 
 
 # -----------------------------------------------------
@@ -47,4 +55,4 @@ onerror:
 # -----------------------------------------------------
 rule all:
     input:
-        targets()
+        targets(),

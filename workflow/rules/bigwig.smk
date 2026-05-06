@@ -95,7 +95,7 @@ rule plotPCA:
 
 # Decompress bedGraph files for averaging
 # -----------------------------------------------------
-#rule decompress_bedgraph:
+# rule decompress_bedgraph:
 #    input:
 #        bg="results/bismark/{sample}/{sample}.deduplicated.bedGraph.gz",
 #    output:
@@ -120,7 +120,7 @@ rule average_bedgraphs:
         # All replicate bedGraphs for the current condition
         bg=lambda wildcards: expand(
             "results/temp/{sample}.bg",
-            sample=[s for s in SAMPLES if s.startswith(wildcards.condition)]
+            sample=[s for s in SAMPLES if s.startswith(wildcards.condition)],
         ),
     output:
         bg=temp("results/temp/{condition}.bg"),

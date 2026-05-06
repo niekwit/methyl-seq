@@ -25,7 +25,7 @@ wildcard_constraints:
     # do not include slashes in sample and condition wildcards to avoid 
     # issues with rules that use these wildcards in file paths
     sample="[^/]+",
-    condition="[^/]+"
+    condition="[^/]+",
 
 
 def targets():
@@ -44,16 +44,18 @@ def targets():
         targets.append("results/plots/boxplots.pdf")
 
     if config["DMR"]["run"]:
-        targets.extend([
-            "results/dmrs/hypomethylated_DMRs_annotated.tab",
-            "results/dmrs/hypermethylated_DMRs_annotated.tab",
-            "results/plots/dmrs/DMR_distance_to_TSS.pdf",
-            "results/plots/dmrs/DMR_genomic_distribution.pdf",
-            "results/plots/dmrs/DMR_volcano.pdf",
-            "results/dmrs/all_methylation_tiles.rds",
-            "results/dmrs/differential_methylation_tiles.rds",
-            "results/dmrs/significant_differential_methylation_tiles.rds",
-        ])
+        targets.extend(
+            [
+                "results/dmrs/hypomethylated_DMRs_annotated.tab",
+                "results/dmrs/hypermethylated_DMRs_annotated.tab",
+                "results/plots/dmrs/DMR_distance_to_TSS.pdf",
+                "results/plots/dmrs/DMR_genomic_distribution.pdf",
+                "results/plots/dmrs/DMR_volcano.pdf",
+                "results/dmrs/all_methylation_tiles.rds",
+                "results/dmrs/differential_methylation_tiles.rds",
+                "results/dmrs/significant_differential_methylation_tiles.rds",
+            ]
+        )
 
     return targets
 

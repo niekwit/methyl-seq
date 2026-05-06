@@ -13,8 +13,8 @@ rule fastqc:
         "results/fastqc/{sample}{read}.log",
     threads: 4
     resources:
-        mem_mb = 1024,
-        runtime = 30,
+        mem_mb=1024,
+        runtime=30,
     wrapper:
         "v7.6.0/bio/fastqc"
 
@@ -49,6 +49,7 @@ rule multiqc:
 # 10  phage_lambda  123  Z  WT_1
 # 9   plasmid_puc19c  1234  z  WT_1
 # 1   plasmid_puc19c  1234  Z  WT_1
+
 
 # NOTE: if a methylation call has no count for a probe
 # it will not be represented in the output file (due to uniq -c).
@@ -94,6 +95,7 @@ rule plot_methylation_conversion_rate:
 
 
 if PAIRED_END:
+
     # Sort non-duplicated BAM files
     # -----------------------------------------------------
     rule sort_deduplicated_bam:
@@ -108,7 +110,9 @@ if PAIRED_END:
             runtime=45,
         wrapper:
             "v9.0.0/bio/samtools/sort"
+
 else:
+
     # Sort non-duplicated BAM files
     # -----------------------------------------------------
     rule sort_deduplicated_bam:
@@ -132,11 +136,12 @@ else:
         output:
             "results/preseq/{sample}.txt",
         params:
-            "-v"   #optional parameters
+            "-v",  #optional parameters
         log:
             "logs/preseq/{sample}.log",
         wrapper:
             "v2.10.0/bio/preseq/lc_extrap"
+
 
 # Plot preseq results
 # -----------------------------------------------------

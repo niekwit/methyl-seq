@@ -2,8 +2,14 @@
 # -----------------------------------------------------
 rule identify_dmrs:
     input:
-        cpgot=expand("results/bismark/{sample}/CpG_OT_{sample}.deduplicated.txt.gz", sample=SAMPLES),
-        cpgob=expand("results/bismark/{sample}/CpG_OB_{sample}.deduplicated.txt.gz", sample=SAMPLES),
+        cpgot=expand(
+            "results/bismark/{sample}/CpG_OT_{sample}.deduplicated.txt.gz",
+            sample=SAMPLES,
+        ),
+        cpgob=expand(
+            "results/bismark/{sample}/CpG_OB_{sample}.deduplicated.txt.gz",
+            sample=SAMPLES,
+        ),
     output:
         hypo="results/dmrs/hypomethylated_DMRs.bed",
         hyper="results/dmrs/hypermethylated_DMRs.bed",
@@ -49,4 +55,3 @@ rule annotate_dmrs:
         "../envs/R.yaml"
     script:
         "../scripts/annotate_dmrs.R"
-

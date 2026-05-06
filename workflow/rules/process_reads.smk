@@ -1,5 +1,5 @@
-
 if PAIRED_END:
+
     # Trim reads
     # -----------------------------------------------------
     rule trim_galore_pe:
@@ -11,7 +11,7 @@ if PAIRED_END:
             fasta_rev=temp("results/trimmed/{sample}_R2.fq.gz"),
             report_rev="logs/trim_galore_pe/{sample}_R2_trimming_report.txt",
         threads: 4
-        resources: 
+        resources:
             runtime=180,
             mem_mb=20000,
             tmpdir=config["temp_dir"],
@@ -49,7 +49,9 @@ if PAIRED_END:
             "-2 {input.r2} "
             "-o {params.outdir} "
             "2> {log}"
+
 else:
+
     # Trim reads
     # -----------------------------------------------------
     rule trim_galore_se:
@@ -60,7 +62,7 @@ else:
             report=temp("results/trimmed/{sample}_report.txt"),
         params:
             extra=f"--illumina -q 20 {config["trim_galore_args"]}",
-        resources: 
+        resources:
             runtime=180,
             mem_mb=20000,
             tmpdir=config["temp_dir"],
@@ -94,11 +96,12 @@ else:
             "{input.fq} "
             "2> {log}"
 
+
 # Deduplicate aligned reads with Bismark
 # -----------------------------------------------------
 rule deduplication:
     input:
-        unpack(dedup_input)
+        unpack(dedup_input),
     output:
         bam="results/bismark/{sample}/{sample}.deduplicated.bam",
     params:
@@ -120,6 +123,7 @@ rule deduplication:
         "{input.bam} "
         "2> {log}"
 
+
 # Extract methylation call for every single C analysed with Bismark
 # -----------------------------------------------------
 rule methylation_extraction:
@@ -128,7 +132,7 @@ rule methylation_extraction:
     output:
         sreport="results/bismark/{sample}/{sample}.deduplicated_splitting_report.txt",
         mbias="results/bismark/{sample}/{sample}.deduplicated.M-bias.txt",
-        bg="results/bismark/{sample}/{sample}.deduplicated.bedGraph.gz", #CpG only
+        bg="results/bismark/{sample}/{sample}.deduplicated.bedGraph.gz",  #CpG only
         cpgot="results/bismark/{sample}/CpG_OT_{sample}.deduplicated.txt.gz",
         cpgob="results/bismark/{sample}/CpG_OB_{sample}.deduplicated.txt.gz",
         cov="results/bismark/{sample}/{sample}.deduplicated.bismark.cov.gz",
@@ -137,7 +141,7 @@ rule methylation_extraction:
         genome_abs=os.path.abspath("resources/"),
         paired="--paired-end" if PAIRED_END else "",
     log:
-        "logs/methylation_extraction/{sample}.log"
+        "logs/methylation_extraction/{sample}.log",
     threads: 4
     resources:
         runtime=600,
@@ -158,6 +162,7 @@ rule methylation_extraction:
         "{input.bam} "
         "2> {log}"
 
+
 # Extract nucleotide coverage
 # -----------------------------------------------------
 rule nucleotide_coverage:
@@ -166,9 +171,9 @@ rule nucleotide_coverage:
     output:
         stats="results/bismark/{sample}/{sample}.deduplicated.nucleotide_stats.txt",
     params:
-        dir=lambda wc, output: os.path.dirname(output.stats)
+        dir=lambda wc, output: os.path.dirname(output.stats),
     log:
-        "logs/nucleotide_coverage/{sample}.log"
+        "logs/nucleotide_coverage/{sample}.log",
     threads: 4
     resources:
         runtime=600,
@@ -182,9 +187,13 @@ rule nucleotide_coverage:
         "{input.bam} "
         "2> {log}"
 
+
 rule multiqc_bismark:
     input:
-        expand("results/bismark/{sample}/{sample}.deduplicated.nucleotide_stats.txt", sample=SAMPLES),
+        expand(
+            "results/bismark/{sample}/{sample}.deduplicated.nucleotide_stats.txt",
+            sample=SAMPLES,
+        ),
     output:
         "results/multiqc/multiqc_bismark.html",
     log:
@@ -196,7 +205,7 @@ rule multiqc_bismark:
         "v8.1.1/bio/multiqc"
 
 
-'''
+"""
 rule summary_report:
     input:
         expand("results/bismark/{sample}/{sample}.bam", sample=SAMPLES),
@@ -211,4 +220,4 @@ rule summary_report:
         "../envs/bismark.yaml"
     shell:
         "bismark2summary -o {output} {input}"
-'''
+"""
