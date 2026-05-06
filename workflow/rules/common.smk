@@ -21,12 +21,19 @@ def check_cwd_no_spaces():
 validate(config, schema="../schemas/config.schema.yaml")
 
 
+wildcard_constraints:
+    # do not include slashes in sample and condition wildcards to avoid 
+    # issues with rules that use these wildcards in file paths
+    sample="[^/]+",
+    condition="[^/]+"
+
+
 def targets():
     targets = [
         "results/plots/PCA.pdf",
         # "results/multiqc/multiqc_bismark.html",
         expand("results/bigwig/{condition}.bw", condition=CONDITIONS),
-        # expand("results/bigwig/{condition}_coverage.bw", condition=CONDITIONS),
+        expand("results/bigwig/coverage/{condition}.bw", condition=CONDITIONS),
         "results/plots/methylation_conversion_rate.csv",
         "results/plots/methylation_conversion_rate.pdf",
         "results/preseq/library_complexity_summary.txt",

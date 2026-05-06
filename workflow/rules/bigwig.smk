@@ -135,7 +135,7 @@ rule average_bedgraphs:
         "../scripts/average_bedgraph.py"
 
 
-# Sort averagre BedGraph files
+# Sort average BedGraph files
 # -----------------------------------------------------
 rule sort_bedgraph:
     input:
@@ -167,6 +167,85 @@ rule average_bedgraph_to_bigwig:
         runtime=60,
     log:
         "logs/average_bedgraph_to_bigwig/{condition}.log",
+    conda:
+        "../envs/deeptools.yaml"
+    shell:
+        "bedGraphToBigWig {input.bg} {input.cs} {output} 2> {log}"
+
+
+# Create per-sample coverage bedGraph from Bismark coverage file
+# -----------------------------------------------------
+rule coverage_bedgraph:
+    input:
+        cov="results/bismark/{sample}/{sample}.deduplicated.bismark.cov.gz",
+    output:
+        bg=temp("results/bismark/{sample}/coverage/{sample}.bg"),
+    log:
+        "logs/coverage_bedgraph/{sample}.log",
+    threads: 2
+    resources:
+        runtime=30,
+    conda:
+        "../envs/deeptools.yaml"
+    shell:
+        "zcat {input.cov} | "
+        """awk 'OFS="\\t" {{ print $1, $2, $2+1, $5+$6 }}' | """
+        "LC_COLLATE=C sort -k1,1 -k2,2n > {output.bg} 2> {log}"
+
+
+# Average coverage bedGraphs across replicates per condition
+# -----------------------------------------------------
+rule average_coverage_bedgraphs:
+    input:
+        bg=lambda wildcards: expand(
+            "results/bismark/{sample}/coverage/{sample}.bg",
+            sample=[s for s in SAMPLES if s.startswith(wildcards.condition)],
+        ),
+    output:
+        bg=temp("results/bismark/coverage/{condition}.bg"),
+    log:
+        "logs/average_coverage_bedgraphs/{condition}.log",
+    threads: 2
+    resources:
+        runtime=120,
+    conda:
+        "../envs/deeptools.yaml"
+    script:
+        "../scripts/average_bedgraph.py"
+
+
+# Sort average coverage bedGraph for bedGraphToBigWig
+# -----------------------------------------------------
+rule sort_coverage_bedgraph:
+    input:
+        bg="results/bismark/coverage/{condition}.bg",
+    output:
+        bg=temp("results/bismark/coverage/sorted/{condition}.bg"),
+    log:
+        "logs/sort_coverage_bedgraph/{condition}.log",
+    threads: 1
+    resources:
+        runtime=30,
+        mem_mb=2000,
+    conda:
+        "../envs/deeptools.yaml"
+    shell:
+        "LC_ALL=C sort -k1,1 -k2,2n {input.bg} > {output.bg} 2> {log}"
+
+
+# Convert average coverage bedGraph to BigWig
+# -----------------------------------------------------
+rule average_coverage_bedgraph_to_bigwig:
+    input:
+        bg="results/bismark/coverage/sorted/{condition}.bg",
+        cs="resources/chrom_sizes.txt",
+    output:
+        "results/bigwig/coverage/{condition}.bw",
+    log:
+        "logs/average_coverage_bedgraph_to_bigwig/{condition}.log",
+    threads: 2
+    resources:
+        runtime=60,
     conda:
         "../envs/deeptools.yaml"
     shell:
