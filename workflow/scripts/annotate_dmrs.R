@@ -6,6 +6,11 @@ sink(log, type = "message")
 library(tidyverse)
 library(GenomicRanges)
 library(rtracklayer)
+library(ChIPseeker)
+library(TxDb.Mmusculus.UCSC.mm39.knownGene)
+library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+library(org.Mm.eg.db)
+library(AnnotationDbi)
 
 # Get input files from Snakemake
 dmr_hyper_file <- snakemake@input[["hyper"]]
