@@ -9,8 +9,10 @@ library(rtracklayer)
 library(ChIPseeker)
 library(TxDb.Mmusculus.UCSC.mm39.knownGene)
 library(TxDb.Hsapiens.UCSC.hg38.knownGene)
+library(org.Hs.eg.db)
 library(org.Mm.eg.db)
 library(AnnotationDbi)
+library(GenomeInfoDb)
 
 # Get input files from Snakemake
 dmr_hyper_file <- snakemake@input[["hyper"]]
