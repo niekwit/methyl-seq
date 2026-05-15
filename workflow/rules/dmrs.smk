@@ -22,6 +22,8 @@ rule identify_dmrs:
         step_size=config["DMR"]["step_size"],
         min_per_group=config["DMR"]["min_per_group"],
         ref_cond=config["DMR"]["reference_condition"],
+        difference_threshold=config["DMR"]["difference_threshold"],
+        qvalue_threshold=config["DMR"]["qvalue_threshold"],
     log:
         "logs/dmrs/identify_dmrs.log",
     threads: 14
