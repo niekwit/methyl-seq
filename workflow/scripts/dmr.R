@@ -98,8 +98,8 @@ meth_list <- mapply(
 )
 
 # Create a vector that contains 1 or 0 for each sample,
-# indicating whether it belongs to the reference condition or not
-ref_vector <- as.integer(str_detect(samples, reference_condition))
+# indicating whether it belongs to the treatment (1) condition or not
+ref_vector <- as.integer(!str_detect(samples, reference_condition))
 
 # Create the methylRawList
 methylobj <- new("methylRawList", meth_list, treatment = ref_vector)
