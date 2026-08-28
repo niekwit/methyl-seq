@@ -19,8 +19,10 @@ if PAIRED_END:
             extra=f"--illumina -q 20 {config["trim_galore_args"]}",
         log:
             "logs/trim_galore_pe/{sample}.log",
+        conda:
+            "../envs/trim_galore.yml"
         wrapper:
-            "v9.3.0/bio/trim_galore/pe"
+            "v9.9.0/bio/trim_galore/pe"
 
     # Align reads with Bismark
     # -----------------------------------------------------
@@ -68,8 +70,10 @@ else:
             tmpdir=config["temp_dir"],
         log:
             "logs/trim_galore_se/{sample}.log",
+        conda:
+            "../envs/trim_galore.yml"
         wrapper:
-            "v9.3.0/bio/trim_galore/se"
+            "v9.9.0/bio/trim_galore/se"
 
     # Align reads with Bismark
     # -----------------------------------------------------
