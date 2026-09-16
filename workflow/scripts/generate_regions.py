@@ -12,6 +12,10 @@ From the genome GTF:
                       resources/chrom_sizes.txt instead if exact assembly
                       lengths are required.
     - genic regions: one interval per feature where column 3 == "gene".
+    - intron regions: one interval per gap between consecutive exons of the
+                       same transcript, derived via a per-transcript
+                       groupby/shift over all exon rows (vectorised, no
+                       per-transcript Python loop -- see intron_bed()).
 
 From the regulatory GTF/GFF3 (optional):
     - promoters    : one interval per feature where column 3 == "promoter".
@@ -29,6 +33,7 @@ Usage:
         --gtf genome.gtf.gz \\
         --whole-genome-bed whole_genome.bed \\
         --genic-bed genic.bed \\
+        --intron-bed intron.bed \\
         [--regulatory-gtf regulatory_features.gff3.gz --promoter-bed promoters.bed] \\
         [--cpg-island-bed cpg_islands.bed] \\
         [--exclude-bed blacklist.bed] \\
@@ -43,6 +48,7 @@ import gzip
 import logging
 import re
 
+import pandas as pd
 import pybedtools
 
 
@@ -79,6 +85,61 @@ def iter_gtf(path):
             yield chrom, feature, int(start) - 1, int(end), feature_name(
                 feature, attributes
             )
+
+
+def exon_dataframe(gtf):
+    """Loads exon rows (chrom, start0, end, transcript_id) from a GTF into a DataFrame."""
+    rows = []
+    with open_maybe_gzip(gtf) as fh:
+        for line in fh:
+            if not line.strip() or line.startswith("#"):
+                continue
+            fields = line.rstrip("\n").split("\t")
+            if len(fields) < 9 or fields[2] != "exon":
+                continue
+            chrom, start, end, attributes = fields[0], fields[3], fields[4], fields[8]
+            m = re.search(r'transcript_id "([^"]+)"', attributes)
+            if not m:
+                continue
+            # GTF coordinates are 1-based inclusive -> BED is 0-based half-open
+            rows.append((chrom, int(start) - 1, int(end), m.group(1)))
+
+    return pd.DataFrame(rows, columns=["chrom", "start0", "end", "transcript_id"])
+
+
+def intron_bed(gtf, out_bed):
+    """
+    Derive intron intervals from exon features via a per-transcript
+    groupby/shift, instead of looping over transcripts in Python: the loop
+    re-scans the exon table per transcript (O(transcripts x exons)), which
+    does not scale to a full genome GTF.
+    """
+    logging.info(f"Deriving intron regions from exons in {gtf}")
+    exons = exon_dataframe(gtf).sort_values(["transcript_id", "start0"])
+
+    grouped = exons.groupby("transcript_id", sort=False)
+    next_start = grouped["start0"].shift(-1)
+    has_next = next_start.notna()
+
+    introns = pd.DataFrame(
+        {
+            "chrom": exons.loc[has_next, "chrom"],
+            "start0": exons.loc[has_next, "end"],
+            "end": next_start[has_next].astype(exons["start0"].dtype),
+            "name": exons.loc[has_next, "transcript_id"],
+        }
+    )
+    # Drop non-positive-length gaps from overlapping/adjacent exon annotations
+    introns = introns[introns["end"] > introns["start0"]]
+    # Transcripts of the same gene (or overlapping genes) commonly share
+    # identical intron coordinates; collapse those to one interval instead
+    # of emitting one row per transcript that has it
+    introns = introns.drop_duplicates(subset=["chrom", "start0", "end"])
+    introns = introns.sort_values(["chrom", "start0"])
+
+    introns.to_csv(out_bed, sep="\t", header=False, index=False)
+
+    logging.info(f"Wrote {len(introns)} intron intervals to {out_bed}")
 
 
 def whole_genome_bed(gtf, out_bed):
@@ -140,6 +201,11 @@ def parse_args():
         help="Output BED for genic ('gene' feature) regions",
     )
     parser.add_argument(
+        "--intron-bed",
+        required=True,
+        help="Output BED for intron regions (gaps between consecutive exons of a transcript)",
+    )
+    parser.add_argument(
         "--regulatory-gtf",
         help="Regulatory build GTF/GFF3 file (.gff3 or .gff3.gz), for promoter regions",
     )
@@ -180,8 +246,9 @@ def main():
 
     whole_genome_bed(args.gtf, args.whole_genome_bed)
     feature_bed(args.gtf, "gene", args.genic_bed)
+    intron_bed(args.gtf, args.intron_bed)
 
-    out_beds = [args.whole_genome_bed, args.genic_bed]
+    out_beds = [args.whole_genome_bed, args.genic_bed, args.intron_bed]
 
     if args.regulatory_gtf:
         feature_bed(args.regulatory_gtf, "promoter", args.promoter_bed)
