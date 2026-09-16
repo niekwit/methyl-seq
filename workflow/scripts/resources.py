@@ -17,8 +17,10 @@ class Resources:
         if "hg" in genome:
             if genome == "hg19":
                 name = "GRCh37"
+                ucsc_build = "hg19"
             elif genome == "hg38":
                 name = "GRCh38"
+                ucsc_build = "hg38"
 
             # Create URLs for genome files
             self.fasta_url = f"{base_url_ens}fasta/homo_sapiens/dna/Homo_sapiens.{name}.dna.primary_assembly.fa.gz"
@@ -26,12 +28,15 @@ class Resources:
                 f"{base_url_ens}gtf/homo_sapiens/Homo_sapiens.{name}.{build}.gtf.gz"
             )
             self.regulatory_gtf_url = f"{base_url_ens}regulation/homo_sapiens/{name}/annotation/Homo_sapiens.{name}.regulatory_features.v{build}.gff3.gz"
+            self.cpg_islands_url = f"https://hgdownload.soe.ucsc.edu/goldenPath/{ucsc_build}/database/cpgIslandExt.txt.gz"
 
         elif "mm" in genome:
             if genome == "mm38":
                 name = "GRCm38"
+                ucsc_build = "mm10"
             elif genome == "mm39":
                 name = "GRCm39"
+                ucsc_build = "mm39"
 
             # Create URLs for genome files
             self.fasta_url = f"{base_url_ens}fasta/mus_musculus/dna/Mus_musculus.{name}.dna.primary_assembly.fa.gz"
@@ -39,6 +44,7 @@ class Resources:
                 f"{base_url_ens}gtf/mus_musculus/Mus_musculus.{name}.{build}.gtf.gz"
             )
             self.regulatory_gtf_url = f"{base_url_ens}regulation/mus_musculus/{name}/annotation/Mus_musculus.{name}.regulatory_features.v{build}.gff3.gz"
+            self.cpg_islands_url = f"https://hgdownload.soe.ucsc.edu/goldenPath/{ucsc_build}/database/cpgIslandExt.txt.gz"
 
         elif "dm" in genome:
             if genome == "dm6":
@@ -48,11 +54,14 @@ class Resources:
             self.gtf_url = f"{base_url_ens}gtf/drosophila_melanogaster/Drosophila_melanogaster.{name}.{build}.gtf.gz"
             # Ensembl does not provide regulatory build data for Drosophila melanogaster
             self.regulatory_gtf_url = None
+            # UCSC does not provide a CpG Islands track for Drosophila melanogaster
+            self.cpg_islands_url = None
 
         elif "test" in genome:
             self.fasta_url = "https://github.com/niekwit/damid-seq/raw/main/.test_pe/Homo_sapiens.GRCh38.dna.primary_assembly_chr11.fa.gz"
             self.gtf_url = "https://ftp.ensembl.org/pub/release-110/gtf/homo_sapiens/Homo_sapiens.GRCh38.110.gtf.gz"
             self.regulatory_gtf_url = None
+            self.cpg_islands_url = None
 
         else:
             raise ValueError("Genome {genome} not supported")
@@ -71,6 +80,21 @@ class Resources:
         # https://github.com/FelixKrueger/Bismark/issues/166#issuecomment-378349782
         self.control_fasta_url = "https://raw.githubusercontent.com/nebiolabs/EM-seq/refs/heads/master/assets/methylation_controls.fa"
         self.control_fasta = self._file_from_url(self.control_fasta_url)
+
+        # Prepare CpG island BED file
+        # Equivalent to downloading cpg_islands.bed.gz from
+        # https://genome.ucsc.edu/cgi-bin/hgTables
+        #   Group: Expression and Regulation
+        #   Track: CpG Islands
+        #   Table: cpgIslandExt
+        #   Region: genome
+        #   Output format: BED
+        #   File: cpg_islands.bed.gz
+        # but fetched non-interactively from UCSC's goldenPath database dump
+        # (same underlying cpgIslandExt table) and converted to BED by the
+        # prepare_cpg_islands rule, since hgTables itself has no stable
+        # scriptable download URL.
+        self.cpg_islands = "resources/cpg_islands.bed" if self.cpg_islands_url else None
 
     def _file_from_url(self, url):
         """Returns file path for unzipped downloaded file"""

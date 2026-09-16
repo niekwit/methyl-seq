@@ -105,6 +105,28 @@ use rule get_genome_fasta as get_regulatory_gtf with:
         "logs/resources/get_regulatory_gtf.log",
 
 
+# Downloads the UCSC cpgIslandExt table (goldenPath database dump -- the same
+# table hgTables serves under Track: CpG Islands) and converts it to a plain
+# BED file, stripping the "chr" prefix and keeping only standard chromosomes
+# to match the Ensembl-style contigs used elsewhere in this workflow.
+rule prepare_cpg_islands:
+    output:
+        resources.cpg_islands,
+    params:
+        url=resources.cpg_islands_url,
+    log:
+        "logs/resources/prepare_cpg_islands.log",
+    conda:
+        "../envs/bismark.yaml"
+    threads: 1
+    shell:
+        "wget -q {params.url} -O {output}.gz 2> {log} ;"
+        "zcat {output}.gz | "
+        "awk -F'\\t' -v OFS='\\t' "
+        "'{{sub(/^chr/, \"\", $2); if ($2 ~ /^([0-9]+|X|Y|MT)$/) print $2, $3, $4, $5}}' "
+        "> {output} 2>> {log}"
+
+
 rule bismark_genome_preparation:
     input:
         fasta="resources/combined_genome.fa",
