@@ -3,7 +3,7 @@ description: main configuration schema for the workflow
 properties:
   genome:
     type: string
-    enum: ["hg19", "hg38", "mm38", "mm39"]
+    enum: ["hg19", "hg38", "mm38", "mm39", "test"]
     description: "Genome assembly to use"
   ensembl_genome_build:
     type: integer
