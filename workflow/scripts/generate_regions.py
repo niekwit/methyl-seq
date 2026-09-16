@@ -20,6 +20,8 @@ From the genome GTF:
                        groupby/shift over all exon rows (vectorised, no
                        per-transcript Python loop -- see intron_bed()), also
                        de-duplicated by coordinates.
+    - intergenic regions: whole-genome intervals minus genic regions minus
+                       --exclude-bed (if given), via `bedtools subtract`.
 
 From the regulatory GTF/GFF3 (optional):
     - promoters    : one interval per feature where column 3 == "promoter".
@@ -39,6 +41,7 @@ Usage:
         --genic-bed genic.bed \\
         --exon-bed exon.bed \\
         --intron-bed intron.bed \\
+        --intergenic-bed intergenic.bed \\
         [--regulatory-gtf regulatory_features.gff3.gz --promoter-bed promoters.bed] \\
         [--cpg-island-bed cpg_islands.bed] \\
         [--exclude-bed blacklist.bed] \\
@@ -191,6 +194,21 @@ def feature_bed(gtf, feature, out_bed):
     logging.info(f"Wrote {len(records)} '{feature}' intervals to {out_bed}")
 
 
+def intergenic_bed(whole_genome_bed, genic_bed, exclude_bed, out_bed):
+    """Whole-genome intervals minus genic regions minus exclude_bed (if given)."""
+    logging.info(
+        f"Deriving intergenic regions from {whole_genome_bed} minus {genic_bed}"
+        + (f" minus {exclude_bed}" if exclude_bed else "")
+    )
+    regions = pybedtools.BedTool(whole_genome_bed).subtract(genic_bed)
+    if exclude_bed:
+        regions = regions.subtract(exclude_bed)
+    regions.moveto(out_bed)
+
+    n = sum(1 for _ in open(out_bed))
+    logging.info(f"Wrote {n} intergenic intervals to {out_bed}")
+
+
 def exclude_overlaps(bed_path, exclude_bed):
     logging.info(f"Removing regions in {bed_path} that overlap {exclude_bed}")
     n_before = sum(1 for _ in open(bed_path))
@@ -226,6 +244,11 @@ def parse_args():
         "--intron-bed",
         required=True,
         help="Output BED for intron regions (gaps between consecutive exons of a transcript)",
+    )
+    parser.add_argument(
+        "--intergenic-bed",
+        required=True,
+        help="Output BED for intergenic regions (whole genome minus genic regions minus --exclude-bed)",
     )
     parser.add_argument(
         "--regulatory-gtf",
@@ -270,6 +293,12 @@ def main():
     feature_bed(args.gtf, "gene", args.genic_bed)
     exon_bed(args.gtf, args.exon_bed)
     intron_bed(args.gtf, args.intron_bed)
+    # Built directly from the not-yet-cleaned whole-genome/genic BEDs below,
+    # with its own --exclude-bed subtraction -- not added to out_beds, since
+    # it is already blacklist-clean by construction
+    intergenic_bed(
+        args.whole_genome_bed, args.genic_bed, args.exclude_bed, args.intergenic_bed
+    )
 
     out_beds = [
         args.whole_genome_bed,
