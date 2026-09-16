@@ -62,16 +62,21 @@ class Resources:
             self.repeat_mask_url = None
 
         elif "test" in genome:
-            self.fasta_url = "https://github.com/niekwit/damid-seq/raw/main/.test_pe/Homo_sapiens.GRCh38.dna.primary_assembly_chr11.fa.gz"
-            self.gtf_url = "https://ftp.ensembl.org/pub/release-110/gtf/homo_sapiens/Homo_sapiens.GRCh38.110.gtf.gz"
-            # Same regulatory/CpG island/RepeatMasker sources as hg38, with
-            # the Ensembl release hard-coded to 110 to match self.gtf_url
-            # above (test data is pinned to that release).
-            self.regulatory_gtf_url = "https://ftp.ensembl.org/pub/release-110/regulation/homo_sapiens/GRCh38/annotation/Homo_sapiens.GRCh38.regulatory_features.v110.gff3.gz"
-            self.cpg_islands_url = "https://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/cpgIslandExt.txt.gz"
-            self.repeat_mask_url = (
-                "https://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/rmsk.txt.gz"
+            # The test reads (.test/reads/) are real Bismark-aligned reads
+            # subsetted to a small mouse (mm39) locus around Rasgrf1 -- see
+            # .test/make_test_data.sh. They are NOT human, so this genome
+            # must be built from the matching mini reference carved out
+            # alongside them (committed to this repo), not downloaded from
+            # Ensembl/UCSC.
+            test_base_url = (
+                "https://github.com/niekwit/methyl-seq/raw/main/.test/resources"
             )
+            self.fasta_url = f"{test_base_url}/genome.fa.gz"
+            self.gtf_url = f"{test_base_url}/genes.gtf.gz"
+            # No subsetted regulatory/CpG island/RepeatMasker test data exists
+            self.regulatory_gtf_url = None
+            self.cpg_islands_url = None
+            self.repeat_mask_url = None
 
         else:
             raise ValueError("Genome {genome} not supported")
