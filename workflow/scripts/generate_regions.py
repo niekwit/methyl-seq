@@ -12,10 +12,14 @@ From the genome GTF:
                       resources/chrom_sizes.txt instead if exact assembly
                       lengths are required.
     - genic regions: one interval per feature where column 3 == "gene".
+    - exon regions : unique intervals from column 3 == "exon", de-duplicated
+                      by coordinates (transcripts of the same gene commonly
+                      share exons).
     - intron regions: one interval per gap between consecutive exons of the
                        same transcript, derived via a per-transcript
                        groupby/shift over all exon rows (vectorised, no
-                       per-transcript Python loop -- see intron_bed()).
+                       per-transcript Python loop -- see intron_bed()), also
+                       de-duplicated by coordinates.
 
 From the regulatory GTF/GFF3 (optional):
     - promoters    : one interval per feature where column 3 == "promoter".
@@ -33,6 +37,7 @@ Usage:
         --gtf genome.gtf.gz \\
         --whole-genome-bed whole_genome.bed \\
         --genic-bed genic.bed \\
+        --exon-bed exon.bed \\
         --intron-bed intron.bed \\
         [--regulatory-gtf regulatory_features.gff3.gz --promoter-bed promoters.bed] \\
         [--cpg-island-bed cpg_islands.bed] \\
@@ -105,6 +110,18 @@ def exon_dataframe(gtf):
             rows.append((chrom, int(start) - 1, int(end), m.group(1)))
 
     return pd.DataFrame(rows, columns=["chrom", "start0", "end", "transcript_id"])
+
+
+def exon_bed(gtf, out_bed):
+    """Writes unique exon intervals (de-duplicated by coordinates) from a GTF."""
+    logging.info(f"Extracting unique exon regions from {gtf}")
+    exons = exon_dataframe(gtf)
+    exons = exons.drop_duplicates(subset=["chrom", "start0", "end"])
+    exons = exons.sort_values(["chrom", "start0"])
+
+    exons.to_csv(out_bed, sep="\t", header=False, index=False)
+
+    logging.info(f"Wrote {len(exons)} unique exon intervals to {out_bed}")
 
 
 def intron_bed(gtf, out_bed):
@@ -201,6 +218,11 @@ def parse_args():
         help="Output BED for genic ('gene' feature) regions",
     )
     parser.add_argument(
+        "--exon-bed",
+        required=True,
+        help="Output BED for unique exon regions",
+    )
+    parser.add_argument(
         "--intron-bed",
         required=True,
         help="Output BED for intron regions (gaps between consecutive exons of a transcript)",
@@ -246,9 +268,15 @@ def main():
 
     whole_genome_bed(args.gtf, args.whole_genome_bed)
     feature_bed(args.gtf, "gene", args.genic_bed)
+    exon_bed(args.gtf, args.exon_bed)
     intron_bed(args.gtf, args.intron_bed)
 
-    out_beds = [args.whole_genome_bed, args.genic_bed, args.intron_bed]
+    out_beds = [
+        args.whole_genome_bed,
+        args.genic_bed,
+        args.exon_bed,
+        args.intron_bed,
+    ]
 
     if args.regulatory_gtf:
         feature_bed(args.regulatory_gtf, "promoter", args.promoter_bed)
