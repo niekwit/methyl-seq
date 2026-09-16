@@ -26,9 +26,10 @@ rule identify_dmrs:
         qvalue_threshold=config["DMR"]["qvalue_threshold"],
     log:
         "logs/dmrs/identify_dmrs.log",
-    threads: 14
+    threads: 32
     resources:
         runtime=120,
+        mem_mb=96000,
     conda:
         "../envs/R.yaml"
     script:
@@ -53,6 +54,7 @@ rule annotate_dmrs:
     threads: 4
     resources:
         runtime=60,
+        mem_mb=12000,
     conda:
         "../envs/R.yaml"
     script:
