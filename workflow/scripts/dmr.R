@@ -17,6 +17,9 @@ cpgob_files <- snakemake@input[["cpgob"]]
 samples <- snakemake@params[["samples"]]
 reference_condition <- snakemake@params[["ref_cond"]]
 genome <- snakemake@config[["genome"]]
+if (genome == "test") {
+  genome <- "mm39"
+}
 tile_size <- snakemake@params[["tile_size"]]
 step_size <- snakemake@params[["step_size"]]
 min_per_group <- strtoi(snakemake@params[["min_per_group"]])
