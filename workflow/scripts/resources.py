@@ -64,9 +64,14 @@ class Resources:
         elif "test" in genome:
             self.fasta_url = "https://github.com/niekwit/damid-seq/raw/main/.test_pe/Homo_sapiens.GRCh38.dna.primary_assembly_chr11.fa.gz"
             self.gtf_url = "https://ftp.ensembl.org/pub/release-110/gtf/homo_sapiens/Homo_sapiens.GRCh38.110.gtf.gz"
-            self.regulatory_gtf_url = None
-            self.cpg_islands_url = None
-            self.repeat_mask_url = None
+            # Same regulatory/CpG island/RepeatMasker sources as hg38, with
+            # the Ensembl release hard-coded to 110 to match self.gtf_url
+            # above (test data is pinned to that release).
+            self.regulatory_gtf_url = "https://ftp.ensembl.org/pub/release-110/regulation/homo_sapiens/GRCh38/annotation/Homo_sapiens.GRCh38.regulatory_features.v110.gff3.gz"
+            self.cpg_islands_url = "https://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/cpgIslandExt.txt.gz"
+            self.repeat_mask_url = (
+                "https://hgdownload.soe.ucsc.edu/goldenPath/hg38/database/rmsk.txt.gz"
+            )
 
         else:
             raise ValueError("Genome {genome} not supported")
