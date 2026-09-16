@@ -239,29 +239,3 @@ rule sort_cpg_probes:
     shell:
         "bedtools sort -i {input.probes} -g {input.cs} > {output} 2> {log}"
 
-
-"""
-# Extend bed regions by a number of bases on each side
-# -----------------------------------------------------
-rule extend_bed_regions:
-    input:
-        bed="bed/{meta_region}.bed",
-        cs="resources/chrom_sizes.txt",
-    output:
-        extended_bed="bed/{meta_region}_extended.bed",
-    params:
-        extend_with=config["metaplot"]["extend"],
-    log:
-        "logs/resources/extend_bed_{meta_region}.log",
-    threads: 1
-    resources:
-        runtime=15,
-        mem_mb=2000,
-    conda:
-        "../envs/deeptools.yaml"
-    shell:
-        "grep -v 'random' {input.bed} | "
-        "bedtools slop -i stdin "
-        "-g {input.cs} "
-        "-b {params.extend_with} > {output.extended_bed} 2> {log}"
-"""
