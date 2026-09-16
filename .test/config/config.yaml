@@ -1,8 +1,52 @@
-samplesheet: "config/samples.tsv"
+genome: mm39 # only human and mouse genomes are currently supported
+ensembl_genome_build: 114
+temp_dir: /tmp # use "/local/" on Cambridge HPC
 
-get_genome:
-  ncbi_ftp: https://ftp.ncbi.nlm.nih.gov/genomes/all/GCF/000/146/045/GCF_000146045.2_R64/GCF_000146045.2_R64_genomic.fna.gz
+# https://felixkrueger.github.io/Bismark/bismark/library_types/
+trim_galore_args: "--clip_R1 10 --clip_R2 10 --three_prime_clip_R1 10 --three_prime_clip_R2 10"
 
-simulate_reads:
-  read_length: 100
-  read_number: 10000
+# Extra bismark arguments for each Bismark sub command
+bismark:
+  align: ""
+  deduplicate: ""
+  extract: ""
+  coverage: ""
+  report: ""
+
+# Deeptools parameters
+deeptools:
+  bigwig_summary:
+    binSize: 10000
+    extra: ""
+  plotPCA:
+    extra: ""
+
+# Box plot parameters
+# % CpG methylation boxplots for different genomic regions
+boxplot:
+  plot: True
+  # Number of CpGs per probe
+  cpg_n: 50
+  min_reads: 5 # minimum reads covering a CpG to keep
+  # Standard regions (whole_genome, genic, exon, intron, intergenic, and
+  # promoter/cpg_islands where available for the genome) are generated
+  # automatically -- see the generate_regions rule in resources.smk.
+
+# Metaplot parameters
+# Average % CpG methylation across genomic regions
+metaplot:
+  plot: True
+  extend: 2000 # extend regions by this many bases on each side
+  regions:
+    # Genomic regions in BED format to plot metaplots for
+    L1Md.T: bed/L1Md.T.bed
+
+DMR:
+  # methylKit settings for DMR calling
+  run: True
+  reference_condition: control # should match config/samples.csv
+  tile_size: 1000
+  step_size: 1000
+  min_per_group: 2
+  difference_threshold: 25
+  qvalue_threshold: 0.01
