@@ -131,8 +131,28 @@ plotAnnoBar(peakAnnoList)
 dev.off()
 
 # Create distance to TSS plot
+# plotDistToTSS() can fail on very small/skewed DMR sets: if every DMR
+# falls on the same side of its nearest TSS, the empty side's distance bin
+# makes ChIPseeker call max()/min() on nothing (-Inf/Inf), which seq() then
+# rejects as non-finite. Fall back to a placeholder page instead of losing
+# every other output from this rule to that one plot.
 pdf(distance_plot, width = 6, height = 3)
-plotDistToTSS(peakAnnoList)
+tryCatch(
+  {
+    plotDistToTSS(peakAnnoList)
+  },
+  error = function(e) {
+    plot.new()
+    text(
+      0.5, 0.5,
+      paste0(
+        "Could not generate distance-to-TSS plot\n",
+        "(likely too few/skewed DMRs): ", conditionMessage(e)
+      ),
+      cex = 0.8
+    )
+  }
+)
 dev.off()
 
 # Create volcano plot of DMRs based on diff_tiles results
