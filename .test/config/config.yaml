@@ -1,4 +1,4 @@
-genome: mm39 # only human and mouse genomes are currently supported
+genome: test # subsetted mm39 mini genome/GTF from .test/resources/ (see resources.py)
 ensembl_genome_build: 114
 temp_dir: /tmp # use "/local/" on Cambridge HPC
 
