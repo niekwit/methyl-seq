@@ -22,6 +22,7 @@ validate(CSV, schema="schemas/samples.schema.yaml")
 CONDITIONS = conditions(CSV)
 REGIONS = regions()
 # META_REGIONS = meta_regions()
+validate_reference_condition(config["DMR"]["reference_condition"], CONDITIONS)
 
 
 # Condition and region names can themselves contain underscores (e.g. a

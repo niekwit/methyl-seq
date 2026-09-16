@@ -104,6 +104,21 @@ def samples_in_condition(csv, condition):
     return csv.loc[csv["condition"] == condition, "sample"].tolist()
 
 
+def validate_reference_condition(reference_condition, conditions):
+    """
+    Checks that config DMR:reference_condition names an actual condition
+    from samples.csv, so a typo fails fast at DAG-build time instead of
+    surfacing later as a confusing methylKit/R error (or silently
+    comparing against nothing, since dmr.R matches it via string
+    detection against sample names).
+    """
+    if reference_condition not in conditions:
+        raise ValueError(
+            f"DMR reference_condition '{reference_condition}' is not one of "
+            f"the conditions in config/samples.csv: {sorted(conditions)}"
+        )
+
+
 def dedup_input(wildcards):
     if PAIRED_END:
         return {
