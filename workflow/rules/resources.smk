@@ -132,8 +132,12 @@ rule prepare_cpg_islands:
 # file (chrom, start, end, repName, ., strand, repClass, repFamily),
 # stripping the "chr" prefix and keeping only standard chromosomes to match
 # the Ensembl-style contigs used elsewhere in this workflow, and drops
-# non-transposable-element repeat classes/families listed in
-# workflow/resources/nonTE_repClasses.txt.
+# rows whose repClass (rmsk column 12) is a non-transposable-element class
+# listed in workflow/resources/nonTE_repClasses.txt. Filtering is done on
+# the repClass field specifically (not a whole-line substring match), since
+# some genuinely transposable SINE families are themselves named after
+# non-TE classes (e.g. SINE/tRNA-RTE, SINE/tRNA-Deu are TEs, not tRNA genes)
+# and would otherwise be dropped by mistake.
 rule prepare_repeat_mask:
     input:
         nonte="workflow/resources/nonTE_repClasses.txt",
@@ -150,8 +154,11 @@ rule prepare_repeat_mask:
         "wget -q {params.url} -O {output}.gz 2> {log} ;"
         "zcat {output}.gz | "
         "awk -F'\\t' -v OFS='\\t' "
-        "'{{sub(/^chr/, \"\", $6); if ($6 ~ /^([0-9]+|X|Y|MT)$/) print $6, $7, $8, $11, \".\", $10, $13, $12}}' | "
-        "grep -v -f {input.nonte} "
+        "'NR==FNR {{nonte[$1]=1; next}} "
+        "{{sub(/^chr/, \"\", $6); if ($6 !~ /^([0-9]+|X|Y|MT)$/) next; "
+        "if ($12 in nonte) next; "
+        "print $6, $7, $8, $11, \".\", $10, $12, $13}}' "
+        "{input.nonte} - "
         "> {output} 2>> {log}"
 
 
