@@ -36,7 +36,6 @@ def targets():
         expand("results/bigwig/coverage/{condition}.bw", condition=CONDITIONS),
         "results/plots/methylation_conversion_rate.csv",
         "results/plots/methylation_conversion_rate.pdf",
-        "results/preseq/library_complexity_summary.txt",
         "results/multiqc/multiqc_report.html",
     ]
 

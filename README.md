@@ -156,8 +156,6 @@ results/
 │   ├── methylation_conversion_rate.pdf
 │   ├── methylation_conversion_rate.csv
 │   └── boxplots.pdf                 # CpG methylation boxplots (if boxplot.plot: True)
-├── preseq/
-│   └── library_complexity_summary.txt
 └── dmrs/                            # Only produced if DMR.run: True
     ├── hypermethylated_DMRs.bed
     ├── hypomethylated_DMRs.bed
