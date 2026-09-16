@@ -30,6 +30,9 @@ volcano_plot <- snakemake@output[["volcano"]]
 
 # Get Snakemake parameters
 genome <- snakemake@config[["genome"]]
+if (genome == "test") {
+  genome <- "mm39"
+}
 difference_threshold <- snakemake@config[["difference_threshold"]]
 qvalue_threshold <- snakemake@config[["qvalue_threshold"]]
 
