@@ -24,6 +24,18 @@ REGIONS = regions()
 # META_REGIONS = meta_regions()
 
 
+# Condition and region names can themselves contain underscores (e.g. a
+# condition "WT_3", a region "whole_genome"), which makes filenames like
+# CpG_methylation_{condition}_{region}.txt ambiguous to reverse-parse from
+# a plain "[^/]+" wildcard -- Snakemake's greedy regex can split them in
+# the wrong place (and can even collide with unrelated literal filenames,
+# e.g. CpG_methylation_all_conditions_all_regions.txt). Constraining both
+# wildcards to the exact known values removes the ambiguity.
+wildcard_constraints:
+    condition="|".join(re.escape(c) for c in CONDITIONS),
+    region="|".join(re.escape(r) for r in REGIONS),
+
+
 # Load rules
 # -----------------------------------------------------
 include: "rules/process_reads.smk"
