@@ -29,6 +29,7 @@ class Resources:
             )
             self.regulatory_gtf_url = f"{base_url_ens}regulation/homo_sapiens/{name}/annotation/Homo_sapiens.{name}.regulatory_features.v{build}.gff3.gz"
             self.cpg_islands_url = f"https://hgdownload.soe.ucsc.edu/goldenPath/{ucsc_build}/database/cpgIslandExt.txt.gz"
+            self.repeat_mask_url = f"https://hgdownload.soe.ucsc.edu/goldenPath/{ucsc_build}/database/rmsk.txt.gz"
 
         elif "mm" in genome:
             if genome == "mm38":
@@ -45,6 +46,7 @@ class Resources:
             )
             self.regulatory_gtf_url = f"{base_url_ens}regulation/mus_musculus/{name}/annotation/Mus_musculus.{name}.regulatory_features.v{build}.gff3.gz"
             self.cpg_islands_url = f"https://hgdownload.soe.ucsc.edu/goldenPath/{ucsc_build}/database/cpgIslandExt.txt.gz"
+            self.repeat_mask_url = f"https://hgdownload.soe.ucsc.edu/goldenPath/{ucsc_build}/database/rmsk.txt.gz"
 
         elif "dm" in genome:
             if genome == "dm6":
@@ -56,12 +58,15 @@ class Resources:
             self.regulatory_gtf_url = None
             # UCSC does not provide a CpG Islands track for Drosophila melanogaster
             self.cpg_islands_url = None
+            # UCSC does not provide a RepeatMasker track for Drosophila melanogaster
+            self.repeat_mask_url = None
 
         elif "test" in genome:
             self.fasta_url = "https://github.com/niekwit/damid-seq/raw/main/.test_pe/Homo_sapiens.GRCh38.dna.primary_assembly_chr11.fa.gz"
             self.gtf_url = "https://ftp.ensembl.org/pub/release-110/gtf/homo_sapiens/Homo_sapiens.GRCh38.110.gtf.gz"
             self.regulatory_gtf_url = None
             self.cpg_islands_url = None
+            self.repeat_mask_url = None
 
         else:
             raise ValueError("Genome {genome} not supported")
@@ -95,6 +100,22 @@ class Resources:
         # prepare_cpg_islands rule, since hgTables itself has no stable
         # scriptable download URL.
         self.cpg_islands = "resources/cpg_islands.bed" if self.cpg_islands_url else None
+
+        # Prepare RepeatMasker BED file (transposable elements only)
+        # Equivalent to downloading repeat_mask.txt.gz from
+        # https://genome.ucsc.edu/cgi-bin/hgTables
+        #   Group: Variation and Repeats
+        #   Track: RepeatMasker
+        #   Table: rmsk
+        #   Region: genome
+        #   Output format: All fields from selected table
+        #   File: repeat_mask.txt.gz
+        # but fetched non-interactively from UCSC's goldenPath database dump
+        # (same underlying rmsk table), converted to BED, and filtered to
+        # drop non-transposable-element repeat classes/families (see
+        # workflow/resources/nonTE_repClasses.txt) by the prepare_repeat_mask
+        # rule, since hgTables itself has no stable scriptable download URL.
+        self.repeat_mask = "resources/repeat_mask.bed" if self.repeat_mask_url else None
 
     def _file_from_url(self, url):
         """Returns file path for unzipped downloaded file"""

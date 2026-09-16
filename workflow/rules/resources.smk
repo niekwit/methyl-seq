@@ -127,6 +127,34 @@ rule prepare_cpg_islands:
         "> {output} 2>> {log}"
 
 
+# Downloads the UCSC rmsk table (goldenPath database dump -- the same table
+# hgTables serves under Track: RepeatMasker), converts it to a plain BED
+# file (chrom, start, end, repName, ., strand, repClass, repFamily),
+# stripping the "chr" prefix and keeping only standard chromosomes to match
+# the Ensembl-style contigs used elsewhere in this workflow, and drops
+# non-transposable-element repeat classes/families listed in
+# workflow/resources/nonTE_repClasses.txt.
+rule prepare_repeat_mask:
+    input:
+        nonte="workflow/resources/nonTE_repClasses.txt",
+    output:
+        resources.repeat_mask,
+    params:
+        url=resources.repeat_mask_url,
+    log:
+        "logs/resources/prepare_repeat_mask.log",
+    conda:
+        "../envs/bismark.yaml"
+    threads: 1
+    shell:
+        "wget -q {params.url} -O {output}.gz 2> {log} ;"
+        "zcat {output}.gz | "
+        "awk -F'\\t' -v OFS='\\t' "
+        "'{{sub(/^chr/, \"\", $6); if ($6 ~ /^([0-9]+|X|Y|MT)$/) print $6, $7, $8, $11, \".\", $10, $13, $12}}' | "
+        "grep -v -f {input.nonte} "
+        "> {output} 2>> {log}"
+
+
 rule bismark_genome_preparation:
     input:
         fasta="resources/combined_genome.fa",
