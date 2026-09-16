@@ -162,6 +162,68 @@ rule prepare_repeat_mask:
         "> {output} 2>> {log}"
 
 
+# Standard genomic regions for boxplot/DMR annotation, generated via
+# generate_regions.py. promoter/cpg_islands outputs are only declared when
+# the genome actually has a regulatory GTF / CpG island track (see
+# resources.py) -- see also regions() in common.smk, which builds REGIONS
+# from these outputs plus any optional config-defined custom regions.
+_region_outputs = {
+    "whole_genome": "bed/whole_genome.bed",
+    "genic": "bed/genic.bed",
+    "exon": "bed/exon.bed",
+    "intron": "bed/intron.bed",
+    "intergenic": "bed/intergenic.bed",
+}
+if resources.regulatory_gtf:
+    _region_outputs["promoter"] = "bed/promoter.bed"
+if resources.cpg_islands:
+    _region_outputs["cpg_islands"] = "bed/cpg_islands.bed"
+
+_region_promoter_args = (
+    f"--regulatory-gtf {resources.regulatory_gtf} --promoter-bed {_region_outputs['promoter']}"
+    if resources.regulatory_gtf
+    else ""
+)
+_region_cpg_args = (
+    f"--cpg-island-bed {resources.cpg_islands} --cpg-island-bed-out {_region_outputs['cpg_islands']}"
+    if resources.cpg_islands
+    else ""
+)
+
+
+rule generate_regions:
+    input:
+        gtf=resources.gtf,
+        chrom_sizes="resources/chrom_sizes.txt",
+        regulatory_gtf=resources.regulatory_gtf if resources.regulatory_gtf else [],
+        cpg_islands=resources.cpg_islands if resources.cpg_islands else [],
+    output:
+        **_region_outputs,
+    params:
+        promoter_args=_region_promoter_args,
+        cpg_args=_region_cpg_args,
+    log:
+        "logs/resources/generate_regions.log",
+    conda:
+        "../envs/deeptools.yaml"
+    threads: 1
+    resources:
+        runtime=30,
+        mem_mb=8000,
+    shell:
+        "python workflow/scripts/generate_regions.py "
+        "--gtf {input.gtf} "
+        "--chrom-sizes {input.chrom_sizes} "
+        "--whole-genome-bed {output.whole_genome} "
+        "--genic-bed {output.genic} "
+        "--exon-bed {output.exon} "
+        "--intron-bed {output.intron} "
+        "--intergenic-bed {output.intergenic} "
+        "{params.promoter_args} "
+        "{params.cpg_args} "
+        "--log {log}"
+
+
 rule bismark_genome_preparation:
     input:
         fasta="resources/combined_genome.fa",

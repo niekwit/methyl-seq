@@ -81,14 +81,13 @@ properties:
         description: "Minimum reads covering a CpG to keep"
       regions:
         type: object
-        description: "Genomic regions in BED format to plot boxplots for"
+        description: "Optional extra custom genomic regions (name -> BED file path) to plot boxplots for, on top of the automatically generated standard regions"
         additionalProperties:
           type: string
     required:
       - plot
       - cpg_n
       - min_reads
-      - regions
   metaplot:
     type: object
     description: "Average % CpG methylation across genomic regions"

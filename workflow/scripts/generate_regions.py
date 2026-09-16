@@ -25,8 +25,9 @@ From the regulatory GTF/GFF3 (optional):
     - promoters    : one interval per feature where column 3 == "promoter".
 
 An existing CpG island BED file (e.g. downloaded from UCSC) can also be
-passed in via --cpg-island-bed; it is not derived from the GTF and is only
-ever cleaned of blacklist overlaps (see below), never regenerated.
+copied through to --cpg-island-bed-out via --cpg-island-bed; it is not
+derived from the GTF and is only ever copied and (optionally) cleaned of
+blacklist overlaps (see below), never regenerated.
 
 Any of the produced/passed-in BED files can optionally be cleaned of regions
 that overlap a user-supplied "exclude" BED file (e.g. a blacklist), via
@@ -42,7 +43,7 @@ Usage:
         --intron-bed intron.bed \\
         --intergenic-bed intergenic.bed \\
         [--regulatory-gtf regulatory_features.gff3.gz --promoter-bed promoters.bed] \\
-        [--cpg-island-bed cpg_islands.bed] \\
+        [--cpg-island-bed cpg_islands.bed --cpg-island-bed-out cpg_islands_out.bed] \\
         [--exclude-bed blacklist.bed] \\
         --log generate_regions.log
 
@@ -54,6 +55,7 @@ import argparse
 import gzip
 import logging
 import re
+import shutil
 
 import pandas as pd
 import pybedtools
@@ -262,9 +264,14 @@ def parse_args():
     parser.add_argument(
         "--cpg-island-bed",
         help=(
-            "Existing CpG island BED file (e.g. from UCSC). Not regenerated -- "
-            "only cleaned of --exclude-bed overlaps, in place, when given"
+            "Existing CpG island BED file (e.g. from UCSC), to copy to "
+            "--cpg-island-bed-out. Not regenerated -- only copied and "
+            "(optionally) cleaned of --exclude-bed overlaps"
         ),
+    )
+    parser.add_argument(
+        "--cpg-island-bed-out",
+        help="Output path for --cpg-island-bed (required together with --cpg-island-bed)",
     )
     parser.add_argument(
         "--exclude-bed",
@@ -275,6 +282,9 @@ def parse_args():
 
     if bool(args.regulatory_gtf) != bool(args.promoter_bed):
         parser.error("--regulatory-gtf and --promoter-bed must be given together")
+
+    if bool(args.cpg_island_bed) != bool(args.cpg_island_bed_out):
+        parser.error("--cpg-island-bed and --cpg-island-bed-out must be given together")
 
     return args
 
@@ -314,7 +324,9 @@ def main():
         out_beds.append(args.promoter_bed)
 
     if args.cpg_island_bed:
-        out_beds.append(args.cpg_island_bed)
+        logging.info(f"Copying {args.cpg_island_bed} to {args.cpg_island_bed_out}")
+        shutil.copyfile(args.cpg_island_bed, args.cpg_island_bed_out)
+        out_beds.append(args.cpg_island_bed_out)
 
     if args.exclude_bed:
         for bed in out_beds:

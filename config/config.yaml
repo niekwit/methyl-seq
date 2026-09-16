@@ -28,14 +28,13 @@ boxplot:
   # Number of CpGs per probe
   cpg_n: 50
   min_reads: 5 # minimum reads covering a CpG to keep
-  regions:
-    # Genomic regions in BED format to plot boxplots for
-    # Whole genome is always included
-    CpG_islands: "config/annotations/hg38_CpG_islands.bed"
-    promoters: "config/annotations/hg38_promoters.bed"
-    exons: "config/annotations/hg38_exons.bed"
-    introns: "config/annotations/hg38_introns.bed"
-    intergenic: "config/annotations/hg38_intergenic.bed"
+  # Standard regions (whole_genome, genic, exon, intron, intergenic, and
+  # promoter/cpg_islands where available for the genome) are generated
+  # automatically -- see the generate_regions rule in resources.smk.
+  # Optionally add extra custom regions here (name -> BED file path) to
+  # plot on top of the automatic set, e.g.:
+  # regions:
+  #   my_custom_region: "config/annotations/my_custom_region.bed"
 
 # Metaplot parameters
 # Average % CpG methylation across genomic regions

@@ -1,3 +1,27 @@
+# Stage optional user-defined custom regions (config boxplot:regions) into
+# the standard bed/{region}.bed location used by every region-wildcarded
+# rule below. wildcard_constraints restricts this rule to exactly those
+# custom names, so it can never collide with the standard region outputs
+# from the generate_regions rule (resources.smk), which are fixed files
+# rather than wildcard matches.
+_custom_regions = config["boxplot"].get("regions", None) or {}
+
+if _custom_regions:
+
+    rule stage_custom_region_bed:
+        input:
+            lambda wildcards: _custom_regions[wildcards.region],
+        output:
+            "bed/{region}.bed",
+        wildcard_constraints:
+            region="|".join(re.escape(r) for r in _custom_regions),
+        log:
+            "logs/resources/stage_custom_region_{region}.log",
+        threads: 1
+        shell:
+            "cp {input} {output} 2> {log}"
+
+
 # Filter CpG probes to keep only those covered by >10 reads (per condition)
 # -----------------------------------------------------
 rule filter_cpg_probes_for_reads:
@@ -70,8 +94,12 @@ rule filter_cpg_probes_for_regions:
         mem_mb=2000,
     conda:
         "../envs/deeptools.yaml"
-    script:
-        "../scripts/filter_cpg_probes_for_regions.sh"
+    shell:
+        "bedtools intersect -sorted -wa "
+        "-a {input.probes} "
+        "-b {input.regions} "
+        "-g {input.chrom_sizes} | "
+        "sort -k1,1 -k2,2n > {output.region_probes} 2> {log}"
 
 
 # Create input for boxplot

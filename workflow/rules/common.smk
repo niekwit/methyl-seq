@@ -1,6 +1,7 @@
 import pandas as pd
 import glob
 import os
+import re
 from scripts.resources import Resources
 from snakemake.utils import validate
 from snakemake.logging import logger
@@ -107,16 +108,28 @@ def dedup_input(wildcards):
 
 
 def regions():
-    regions = config["boxplot"].get("regions", None)
-    # Get keys of regions dict
-    if regions:
-        # Create empty bed file for whole genome
-        with open("bed/whole.genome.bed", "w") as f:
-            f.write("")
+    """
+    Standard genomic regions generated automatically by the generate_regions
+    rule (see resources.smk), plus any optional extra custom regions the
+    user defines under config boxplot:regions (name -> BED file path).
+    """
+    standard = ["whole_genome", "genic", "exon", "intron", "intergenic"]
+    if resources.regulatory_gtf:
+        standard.append("promoter")
+    if resources.cpg_islands:
+        standard.append("cpg_islands")
 
-        return ["whole.genome"] + list(regions.keys())
-    else:
-        raise ValueError("No regions defined in config file under boxplot:regions")
+    extra = config["boxplot"].get("regions", None) or {}
+
+    clashes = set(extra.keys()) & set(standard)
+    if clashes:
+        raise ValueError(
+            f"config boxplot:regions name(s) {sorted(clashes)} clash with "
+            "automatically generated standard region(s) of the same name -- "
+            "please rename them"
+        )
+
+    return standard + list(extra.keys())
 
 
 def meta_regions():
