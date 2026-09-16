@@ -33,8 +33,8 @@ genome <- snakemake@config[["genome"]]
 if (genome == "test") {
   genome <- "mm39"
 }
-difference_threshold <- snakemake@config[["difference_threshold"]]
-qvalue_threshold <- snakemake@config[["qvalue_threshold"]]
+difference_threshold <- snakemake@params[["difference_threshold"]]
+qvalue_threshold <- snakemake@params[["qvalue_threshold"]]
 
 # Load bed files and convert to GRanges
 hyper_gr <- rtracklayer::import(dmr_hyper_file, format = "bed")

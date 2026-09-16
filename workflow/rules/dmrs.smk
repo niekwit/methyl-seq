@@ -49,6 +49,9 @@ rule annotate_dmrs:
         distance="results/plots/dmrs/DMR_distance_to_TSS.pdf",
         distribution="results/plots/dmrs/DMR_genomic_distribution.pdf",
         volcano="results/plots/dmrs/DMR_volcano.pdf",
+    params:
+        difference_threshold=config["DMR"]["difference_threshold"],
+        qvalue_threshold=config["DMR"]["qvalue_threshold"],
     log:
         "logs/dmrs/annotate_dmrs.log",
     threads: 4
