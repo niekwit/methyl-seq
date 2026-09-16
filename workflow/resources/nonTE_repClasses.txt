@@ -1,0 +1,11 @@
+Simple_repeat
+Low_complexity
+Satellite
+RNA
+rRNA
+scRNA
+snRNA
+srpRNA
+tRNA
+Unknown
+Unspecified
