@@ -8,6 +8,8 @@ from snakemake.shell import shell
 cwd = os.getcwd()
 
 bismark_threads = int(snakemake.threads / 2)
-command = f"bismark_genome_preparation --verbose --parallel {bismark_threads} resources/"
+command = (
+    f"bismark_genome_preparation --verbose --parallel {bismark_threads} resources/"
+)
 print(command)
 shell(command)
