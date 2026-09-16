@@ -4,6 +4,7 @@ sink(log, type = "output")
 sink(log, type = "message")
 
 library(tidyverse)
+library(methylKit)
 library(GenomicRanges)
 library(rtracklayer)
 library(ChIPseeker)
@@ -13,6 +14,7 @@ library(org.Hs.eg.db)
 library(org.Mm.eg.db)
 library(AnnotationDbi)
 library(GenomeInfoDb)
+library(cowplot)
 
 # Get input files from Snakemake
 dmr_hyper_file <- snakemake@input[["hyper"]]
@@ -93,23 +95,17 @@ peakAnnoList <- lapply(peakAnnoList, function(anno_obj) {
 
 # Add column to mark if genes are unique to hyper or hypo group
 peakAnnoList_df <- lapply(peakAnnoList, as.data.frame)
+
+hyper_genes <- unique(peakAnnoList_df$Hypermethylated$geneId)
+hypo_genes <- unique(peakAnnoList_df$Hypomethylated$geneId)
+
 for (i in seq_along(peakAnnoList_df)) {
   tmp <- peakAnnoList_df[[i]]
-
-  # Mark genes as "Unique to Hyper" or "Unique to Hypo"
   label <- names(peakAnnoList_df)[i]
   if (label == "Hypermethylated") {
-    tmp$Group <- ifelse(
-      tmp$geneId %in% genes[["Hypermethylated"]],
-      "Unique to Hyper",
-      "Shared"
-    )
+    tmp$Group <- ifelse(tmp$geneId %in% hypo_genes, "Shared", "Unique to Hyper")
   } else if (label == "Hypomethylated") {
-    tmp$Group <- ifelse(
-      tmp$geneId %in% genes[["Hypomethylated"]],
-      "Unique to Hypo",
-      "Shared"
-    )
+    tmp$Group <- ifelse(tmp$geneId %in% hyper_genes, "Shared", "Unique to Hypo")
   }
   peakAnnoList_df[[i]] <- tmp
 }
@@ -136,10 +132,10 @@ pdf(distance_plot, width = 6, height = 3)
 plotDistToTSS(peakAnnoList)
 dev.off()
 
-# Create volcano plot
+# Create volcano plot of DMRs based on diff_tiles results
 diff_tiles <- readRDS(diff_tiles_file)
 
-diff_tiles_df <- as.data.frame(diff_tiles_noLINE1_gr) %>%
+diff_tiles_df <- getData(diff_tiles) %>%
   mutate(
     sig = case_when(
       qvalue < qvalue_threshold &
