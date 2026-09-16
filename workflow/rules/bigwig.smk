@@ -189,6 +189,7 @@ rule coverage_bedgraph:
         "../envs/deeptools.yaml"
     shell:
         "zcat {input.cov} | "
+        "grep -Ev '^phage_T4|^phage_Xp12|^phage_lambda|^plasmid_puc19c' | "
         """awk 'OFS="\\t" {{ print $1, $2, $2+1, $5+$6 }}' | """
         "LC_COLLATE=C sort -k1,1 -k2,2n > {output.bg} 2> {log}"
 
