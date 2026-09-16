@@ -96,6 +96,15 @@ use rule get_genome_fasta as get_gtf with:
         "logs/resources/get_gtf.log",
 
 
+use rule get_genome_fasta as get_regulatory_gtf with:
+    output:
+        resources.regulatory_gtf,
+    params:
+        url=resources.regulatory_gtf_url,
+    log:
+        "logs/resources/get_regulatory_gtf.log",
+
+
 rule bismark_genome_preparation:
     input:
         fasta="resources/combined_genome.fa",

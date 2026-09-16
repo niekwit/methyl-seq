@@ -25,6 +25,7 @@ class Resources:
             self.gtf_url = (
                 f"{base_url_ens}gtf/homo_sapiens/Homo_sapiens.{name}.{build}.gtf.gz"
             )
+            self.regulatory_gtf_url = f"{base_url_ens}regulation/homo_sapiens/{name}/annotation/Homo_sapiens.{name}.regulatory_features.v{build}.gff3.gz"
 
         elif "mm" in genome:
             if genome == "mm38":
@@ -37,6 +38,7 @@ class Resources:
             self.gtf_url = (
                 f"{base_url_ens}gtf/mus_musculus/Mus_musculus.{name}.{build}.gtf.gz"
             )
+            self.regulatory_gtf_url = f"{base_url_ens}regulation/mus_musculus/{name}/annotation/Mus_musculus.{name}.regulatory_features.v{build}.gff3.gz"
 
         elif "dm" in genome:
             if genome == "dm6":
@@ -44,10 +46,13 @@ class Resources:
 
             self.fasta_url = f"{base_url_ens}fasta/drosophila_melanogaster/dna/Drosophila_melanogaster.{name}.dna.toplevel.fa.gz"
             self.gtf_url = f"{base_url_ens}gtf/drosophila_melanogaster/Drosophila_melanogaster.{name}.{build}.gtf.gz"
+            # Ensembl does not provide regulatory build data for Drosophila melanogaster
+            self.regulatory_gtf_url = None
 
         elif "test" in genome:
             self.fasta_url = "https://github.com/niekwit/damid-seq/raw/main/.test_pe/Homo_sapiens.GRCh38.dna.primary_assembly_chr11.fa.gz"
             self.gtf_url = "https://ftp.ensembl.org/pub/release-110/gtf/homo_sapiens/Homo_sapiens.GRCh38.110.gtf.gz"
+            self.regulatory_gtf_url = None
 
         else:
             raise ValueError("Genome {genome} not supported")
@@ -56,6 +61,11 @@ class Resources:
         self.fasta = self._file_from_url(self.fasta_url)
         self.filtered_fasta = self._filtered_fasta_from_url(self.fasta_url)
         self.gtf = self._file_from_url(self.gtf_url)
+        self.regulatory_gtf = (
+            self._file_from_url(self.regulatory_gtf_url)
+            if self.regulatory_gtf_url
+            else None
+        )
 
         # Control fasta from NEB GitHub
         # https://github.com/FelixKrueger/Bismark/issues/166#issuecomment-378349782
