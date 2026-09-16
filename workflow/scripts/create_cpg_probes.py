@@ -56,12 +56,17 @@ def create_probes(args):
 
     try:
         logging.info(f"Processing chromosome: {chrom}")
-        # Read the bed file into a pandas DataFrame, filtering for the current chromosome
+        # Read the bed file into a pandas DataFrame, filtering for the current chromosome.
+        # dtype=str on "chrom" matters: without it, pandas infers a purely
+        # numeric chrom column (e.g. Ensembl-style "9", "1", ...) as int64,
+        # which then never equals the str chrom name below and silently
+        # drops every such chromosome.
         df_all = pd.read_csv(
             in_file,
             sep="\t",
             header=None,
             names=["chrom", "start", "end"],
+            dtype={"chrom": str},
             low_memory=False,
         )
 
@@ -113,9 +118,10 @@ def get_chromosomes(file_path):
                 sep="\t",
                 header=None,
                 names=["chrom", "start", "end"],
+                dtype={"chrom": str},
                 low_memory=False,
             )
-            return df["chrom"].astype(str).unique().tolist()
+            return df["chrom"].unique().tolist()
     except FileNotFoundError:
         logging.error(f"The file '{file_path}' was not found.")
         sys.exit(1)
