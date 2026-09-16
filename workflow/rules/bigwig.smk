@@ -6,7 +6,12 @@ rule bedgraph_to_bigwig:
         cs="resources/chrom_sizes.txt",
     output:
         bw="results/bismark/{sample}/{sample}.deduplicated.bw",
-        bg=temp("results/temp/{sample}.bg"),
+        # Under its own samples/ subdirectory so it can never collide with
+        # average_bedgraphs' results/temp/conditions/{condition}.bg below,
+        # which would otherwise happen whenever a sample's name equals a
+        # condition's name (e.g. a singleton condition named after its
+        # only sample)
+        bg=temp("results/temp/samples/{sample}.bg"),
     log:
         "logs/bedgraph_to_bigwig/{sample}.log",
     threads: 4
@@ -119,11 +124,11 @@ rule average_bedgraphs:
     input:
         # All replicate bedGraphs for the current condition
         bg=lambda wildcards: expand(
-            "results/temp/{sample}.bg",
-            sample=[s for s in SAMPLES if s.startswith(wildcards.condition)],
+            "results/temp/samples/{sample}.bg",
+            sample=samples_in_condition(CSV, wildcards.condition),
         ),
     output:
-        bg=temp("results/temp/{condition}.bg"),
+        bg=temp("results/temp/conditions/{condition}.bg"),
     resources:
         runtime=120,
     log:
@@ -139,7 +144,7 @@ rule average_bedgraphs:
 # -----------------------------------------------------
 rule sort_bedgraph:
     input:
-        bg="results/temp/{condition}.bg",
+        bg="results/temp/conditions/{condition}.bg",
     output:
         bg="results/bismark/{condition}.bg",
     log:
@@ -200,7 +205,7 @@ rule average_coverage_bedgraphs:
     input:
         bg=lambda wildcards: expand(
             "results/bismark/{sample}/coverage/{sample}.bg",
-            sample=[s for s in SAMPLES if s.startswith(wildcards.condition)],
+            sample=samples_in_condition(CSV, wildcards.condition),
         ),
     output:
         bg=temp("results/bismark/coverage/{condition}.bg"),

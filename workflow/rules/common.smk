@@ -92,6 +92,18 @@ def conditions(csv):
     return list(set(csv["condition"]))
 
 
+def samples_in_condition(csv, condition):
+    """
+    Sample names belonging to a condition, via the exact sample/condition
+    mapping in samples.csv -- not a name-prefix heuristic. A prefix check
+    (sample.startswith(condition)) silently pulls in unrelated samples
+    whenever one sample's name is a prefix of another's, e.g. condition
+    "WT" wrongly matching a sample named "WT_3" whose own condition is the
+    separate "WT_3".
+    """
+    return csv.loc[csv["condition"] == condition, "sample"].tolist()
+
+
 def dedup_input(wildcards):
     if PAIRED_END:
         return {
