@@ -1,16 +1,14 @@
 #!/usr/bin/env python3
 
 """
-Generates BED files of genomic regions from an Ensembl-style genome GTF and
-(optionally) an Ensembl regulatory-build GFF3 file.
+Generates BED files of genomic regions from a chrom_sizes file, an
+Ensembl-style genome GTF, and (optionally) an Ensembl regulatory-build GFF3
+file.
+
+From --chrom-sizes (e.g. resources/chrom_sizes.txt, cut from a FASTA .fai):
+    - whole genome : one interval per contig, spanning 0 to its exact length.
 
 From the genome GTF:
-    - whole genome : one interval per contig, spanning 0 to the highest
-                      coordinate annotated on that contig in the GTF. This is
-                      an approximation of chromosome length derived purely
-                      from the GTF (no FASTA/.fai is read) -- use
-                      resources/chrom_sizes.txt instead if exact assembly
-                      lengths are required.
     - genic regions: one interval per feature where column 3 == "gene".
     - exon regions : unique intervals from column 3 == "exon", de-duplicated
                       by coordinates (transcripts of the same gene commonly
@@ -37,6 +35,7 @@ that overlap a user-supplied "exclude" BED file (e.g. a blacklist), via
 Usage:
     python generate_regions.py \\
         --gtf genome.gtf.gz \\
+        --chrom-sizes chrom_sizes.txt \\
         --whole-genome-bed whole_genome.bed \\
         --genic-bed genic.bed \\
         --exon-bed exon.bed \\
@@ -162,20 +161,18 @@ def intron_bed(gtf, out_bed):
     logging.info(f"Wrote {len(introns)} intron intervals to {out_bed}")
 
 
-def whole_genome_bed(gtf, out_bed):
-    logging.info(
-        f"Deriving whole-genome intervals (max annotated coordinate per contig) from {gtf}"
-    )
-    max_end = {}
-    for chrom, _feature, _start0, end, _name in iter_gtf(gtf):
-        if end > max_end.get(chrom, 0):
-            max_end[chrom] = end
+def whole_genome_bed(chrom_sizes, out_bed):
+    logging.info(f"Deriving whole-genome intervals from {chrom_sizes}")
+    n = 0
+    with open(chrom_sizes) as fh, open(out_bed, "wt") as out:
+        for line in fh:
+            if not line.strip():
+                continue
+            chrom, size = line.rstrip("\n").split("\t")[:2]
+            out.write(f"{chrom}\t0\t{size}\n")
+            n += 1
 
-    with open(out_bed, "wt") as fh:
-        for chrom in sorted(max_end):
-            fh.write(f"{chrom}\t0\t{max_end[chrom]}\n")
-
-    logging.info(f"Wrote {len(max_end)} contigs to {out_bed}")
+    logging.info(f"Wrote {n} contigs to {out_bed}")
 
 
 def feature_bed(gtf, feature, out_bed):
@@ -224,6 +221,11 @@ def parse_args():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--gtf", required=True, help="Genome GTF file (.gtf or .gtf.gz)"
+    )
+    parser.add_argument(
+        "--chrom-sizes",
+        required=True,
+        help="Two-column chrom/size file (e.g. resources/chrom_sizes.txt), for whole-genome intervals",
     )
     parser.add_argument(
         "--whole-genome-bed",
@@ -289,7 +291,7 @@ def main():
         ),
     )
 
-    whole_genome_bed(args.gtf, args.whole_genome_bed)
+    whole_genome_bed(args.chrom_sizes, args.whole_genome_bed)
     feature_bed(args.gtf, "gene", args.genic_bed)
     exon_bed(args.gtf, args.exon_bed)
     intron_bed(args.gtf, args.intron_bed)
