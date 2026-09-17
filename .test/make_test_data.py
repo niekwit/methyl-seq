@@ -52,8 +52,8 @@ RES_DIR = OUT_DIR / "resources"
 
 # Target region (mm39). The "chr" prefix is optional and auto-matched to the BAM.
 REGION_CHR = "9"
-REGION_START = 89761645
-REGION_END = 89761980
+REGION_START = 89185060
+REGION_END = 90828384
 REGION_NAME = "Rasgrf1"
 
 CONTROL_CONTIG_RE = re.compile(
@@ -361,6 +361,13 @@ def make_mini_genome(args):
         out.write("\n")
     pysam.faidx(str(out_fasta))
 
+    # resources.py's "test" genome branch fetches genome.fa.gz (matching
+    # every other genome's fasta_url, which always points at a .gz) -- keep
+    # this in sync with the plain genome.fa written above, the same way
+    # carve_annotation() below does for the annotation tracks.
+    with open(out_fasta, "rb") as f_in, gzip.open(f"{out_fasta}.gz", "wb") as f_out:
+        f_out.writelines(f_in)
+
     chrom_sizes = RES_DIR / "chrom.sizes"
     with open(f"{out_fasta}.fai") as fai, open(chrom_sizes, "wt") as out:
         for line in fai:
@@ -375,7 +382,7 @@ def make_mini_genome(args):
         )
 
     print(
-        f"   {out_fasta}  (contig '{args.mini_contig}', coordinate offset "
+        f"   {out_fasta}(.gz)  (contig '{args.mini_contig}', coordinate offset "
         f"applied to test data = {args.offset})"
     )
     print(f"   {target_bed}  (target locus in mini-genome coordinates)")
