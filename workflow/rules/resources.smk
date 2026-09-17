@@ -188,17 +188,34 @@ if resources.repeat_mask_url:
 # the genome actually has a regulatory GTF / CpG island track (see
 # resources.py) -- see also regions() in common.smk, which builds REGIONS
 # from these outputs plus any optional config-defined custom regions.
+#
+# When the LINE1 boxplot feature is on (validate_line1_config() in
+# common.smk already guarantees resources.repeat_mask is set whenever
+# LINE1_REGIONS is non-empty), genic/promoter/cpg_islands are written to
+# intermediate "_raw" paths here instead of their final bed/ location: the
+# LINE1 pipeline's gene-overlap exclusion (filter_repeat_mask_nongenic,
+# below) needs the ORIGINAL, un-subtracted gene-body span, and the
+# subtract_te_from_* rules below then produce the final, transposon-
+# subtracted bed/{region}.bed that the existing boxplot pipeline consumes
+# -- see the plan's "circularity to avoid" note for why these can't be the
+# same file.
+_line1_active = bool(LINE1_REGIONS)
+
 _region_outputs = {
     "whole_genome": "bed/whole_genome.bed",
-    "genic": "bed/genic.bed",
+    "genic": "resources/genic_raw.bed" if _line1_active else "bed/genic.bed",
     "exon": "bed/exon.bed",
     "intron": "bed/intron.bed",
     "intergenic": "bed/intergenic.bed",
 }
 if resources.regulatory_gtf:
-    _region_outputs["promoter"] = "bed/promoter.bed"
+    _region_outputs["promoter"] = (
+        "resources/promoter_raw.bed" if _line1_active else "bed/promoter.bed"
+    )
 if resources.cpg_islands:
-    _region_outputs["cpg_islands"] = "bed/cpg_islands.bed"
+    _region_outputs["cpg_islands"] = (
+        "resources/cpg_islands_raw.bed" if _line1_active else "bed/cpg_islands.bed"
+    )
 
 _region_promoter_args = (
     f"--regulatory-gtf {resources.regulatory_gtf} --promoter-bed {_region_outputs['promoter']}"
@@ -243,6 +260,116 @@ rule generate_regions:
         "{params.promoter_args} "
         "{params.cpg_args} "
         "--log {log}"
+
+
+if _line1_active:
+
+    # Final, transposon-subtracted genic/promoter/cpg_islands region BEDs
+    # (what the existing boxplot pipeline actually consumes) -- trims only
+    # the TE-overlapping bases out of each interval via `bedtools subtract`
+    # (NOT `intersect -v`, which would drop a whole gene body just because
+    # one small intronic TE fragment overlaps it). Re-sorted afterwards
+    # since downstream `bedtools intersect -sorted` requires it.
+    rule subtract_te_from_genic:
+        input:
+            raw=_region_outputs["genic"],
+            te=resources.repeat_mask,
+            chrom_sizes="resources/chrom_sizes.txt",
+        output:
+            "bed/genic.bed",
+        log:
+            "logs/resources/subtract_te_genic.log",
+        conda:
+            "../envs/deeptools.yaml"
+        threads: 1
+        resources:
+            runtime=15,
+            mem_mb=4000,
+        shell:
+            "bedtools subtract -a {input.raw} -b {input.te} | "
+            "bedtools sort -i - -g {input.chrom_sizes} > {output} 2> {log}"
+
+    if resources.regulatory_gtf:
+
+        use rule subtract_te_from_genic as subtract_te_from_promoter with:
+            input:
+                raw=_region_outputs["promoter"],
+                te=resources.repeat_mask,
+                chrom_sizes="resources/chrom_sizes.txt",
+            output:
+                "bed/promoter.bed",
+            log:
+                "logs/resources/subtract_te_promoter.log",
+
+    if resources.cpg_islands:
+
+        use rule subtract_te_from_genic as subtract_te_from_cpg_islands with:
+            input:
+                raw=_region_outputs["cpg_islands"],
+                te=resources.repeat_mask,
+                chrom_sizes="resources/chrom_sizes.txt",
+            output:
+                "bed/cpg_islands.bed",
+            log:
+                "logs/resources/subtract_te_cpg_islands.log",
+
+    # Step 2 of the LINE1 feature: drop any repeat element that overlaps a
+    # gene body entirely (not a partial trim -- see subtract_te_from_genic
+    # above for that), using the RAW (pre-subtraction) genic span so this
+    # doesn't circularly depend on genic.bed already having TEs removed.
+    rule filter_repeat_mask_nongenic:
+        input:
+            repeat_mask=resources.repeat_mask,
+            genic=_region_outputs["genic"],
+        output:
+            "resources/repeat_mask_nongenic.bed",
+        log:
+            "logs/resources/filter_repeat_mask_nongenic.log",
+        conda:
+            "../envs/deeptools.yaml"
+        threads: 1
+        resources:
+            runtime=30,
+            mem_mb=8000,
+        shell:
+            "bedtools intersect -v -a {input.repeat_mask} -b {input.genic} "
+            "> {output} 2> {log}"
+
+    # Steps 3-4 of the LINE1 feature: subset to LINE1 (L1 family) elements
+    # of at least the configured length, then split into the configured
+    # subfamilies (repName prefix, "_"-boundary matched) -- see
+    # generate_line1_regions.py.
+    _line1_subfamilies = list(config["boxplot"]["LINE1"].get("subfamilies", []))
+    _line1_subfamily_beds = [f"bed/{sf}.bed" for sf in _line1_subfamilies]
+    _line1_subfamily_args = " ".join(
+        f"--subfamily-bed {sf}={bed}"
+        for sf, bed in zip(_line1_subfamilies, _line1_subfamily_beds)
+    )
+
+    rule generate_line1_regions:
+        input:
+            repeat_mask="resources/repeat_mask_nongenic.bed",
+        output:
+            line1="bed/LINE1.bed",
+            subfamily=_line1_subfamily_beds,
+        params:
+            min_length=config["boxplot"]["LINE1"]["min_length"],
+            subfamily_args=_line1_subfamily_args,
+        log:
+            "logs/resources/generate_line1_regions.log",
+        conda:
+            "../envs/deeptools.yaml"
+        threads: 1
+        resources:
+            runtime=30,
+            mem_mb=8000,
+        shell:
+            "python " + WORKFLOW_SCRIPTS + "/generate_line1_regions.py "
+            "--repeat-mask {input.repeat_mask} "
+            "--min-length {params.min_length} "
+            "--line1-bed {output.line1} "
+            "{params.subfamily_args} "
+            "--log {log}"
 
 
 rule bismark_genome_preparation:

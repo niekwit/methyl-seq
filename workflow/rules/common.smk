@@ -43,6 +43,9 @@ def targets():
     if config["boxplot"]["plot"]:
         targets.append("results/plots/boxplots.pdf")
 
+    if config["boxplot"].get("LINE1", {}).get("plot", False):
+        targets.append("results/plots/line1_boxplots.pdf")
+
     if config["DMR"]["run"]:
         targets.extend(
             [
@@ -148,15 +151,48 @@ def regions():
 
     extra = config["boxplot"].get("regions", None) or {}
 
-    clashes = set(extra.keys()) & set(standard)
+    clashes = set(extra.keys()) & (set(standard) | set(line1_regions()))
     if clashes:
         raise ValueError(
             f"config boxplot:regions name(s) {sorted(clashes)} clash with "
-            "automatically generated standard region(s) of the same name -- "
-            "please rename them"
+            "automatically generated standard/LINE1 region(s) of the same "
+            "name -- please rename them"
         )
 
     return standard + list(extra.keys())
+
+
+def line1_regions():
+    """
+    LINE1 total + user-configured LINE1 subfamily regions, in configured
+    order, only when config boxplot:LINE1:plot is true -- mirrors
+    regions(), but drives the separate LINE1-family boxplot figure
+    (results/plots/line1_boxplots.pdf) instead of the main one. Returns []
+    when LINE1.plot is false/absent -- REGIONS, targets(), and the region
+    wildcard_constraint are then completely unaffected.
+    """
+    line1_cfg = config["boxplot"].get("LINE1", {})
+    if not line1_cfg.get("plot", False):
+        return []
+    return ["LINE1"] + list(line1_cfg.get("subfamilies", []))
+
+
+def validate_line1_config(line1_regions, resources):
+    """
+    Checks config boxplot:LINE1:plot is only enabled for a genome that
+    actually has a RepeatMasker track (resources.repeat_mask is None e.g.
+    for dm6). Whether a configured subfamily actually matches any elements
+    in repeat_mask.bed can't be checked here (repeat_mask.bed is only
+    materialised by a job at DAG-execution time) -- that hard-errors
+    inside generate_line1_regions.py instead, mirroring this function's
+    relationship to validate_reference_condition() above.
+    """
+    if line1_regions and resources.repeat_mask is None:
+        raise ValueError(
+            f"config boxplot:LINE1:plot is true, but genome '{resources.genome}' "
+            "has no RepeatMasker track available for this pipeline "
+            "(Resources.repeat_mask_url is not set) -- LINE1 analysis is not possible."
+        )
 
 
 def meta_regions():

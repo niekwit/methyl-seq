@@ -31,6 +31,13 @@ boxplot:
   # Standard regions (whole_genome, genic, exon, intron, intergenic, and
   # promoter/cpg_islands where available for the genome) are generated
   # automatically -- see the generate_regions rule in resources.smk.
+  LINE1:
+    plot: True
+    min_length: 100
+    subfamilies:
+      - L1MdA
+      - L1MdF
+      - L1MdTf
 
 # Metaplot parameters
 # Average % CpG methylation across genomic regions

@@ -28,6 +28,13 @@ boxplot:
   # Number of CpGs per probe
   cpg_n: 50
   min_reads: 5 # minimum reads covering a CpG to keep
+  LINE1:
+    plot: true
+    min_length: 5000
+    subfamilies:
+      - L1MdA
+      - L1MdF
+
   # Standard regions (whole_genome, genic, exon, intron, intergenic, and
   # promoter/cpg_islands where available for the genome) are generated
   # automatically -- see the generate_regions rule in resources.smk.

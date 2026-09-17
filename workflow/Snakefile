@@ -23,6 +23,8 @@ CONDITIONS = conditions(CSV)
 REGIONS = regions()
 # META_REGIONS = meta_regions()
 validate_reference_condition(config["DMR"]["reference_condition"], CONDITIONS)
+LINE1_REGIONS = line1_regions()
+validate_line1_config(LINE1_REGIONS, resources)
 
 
 # Condition and region names can themselves contain underscores (e.g. a
@@ -34,7 +36,7 @@ validate_reference_condition(config["DMR"]["reference_condition"], CONDITIONS)
 # wildcards to the exact known values removes the ambiguity.
 wildcard_constraints:
     condition="|".join(re.escape(c) for c in CONDITIONS),
-    region="|".join(re.escape(r) for r in REGIONS),
+    region="|".join(re.escape(r) for r in REGIONS + LINE1_REGIONS),
 
 
 # Load rules
