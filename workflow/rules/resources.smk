@@ -1,3 +1,10 @@
+# Absolute paths into the workflow's own scripts/resources -- shell commands
+# run with CWD = --directory (an analysis dir, not necessarily this repo),
+# so a bare relative "workflow/scripts/foo.py" only resolves by accident.
+WORKFLOW_SCRIPTS = os.path.join(workflow.basedir, "scripts")
+WORKFLOW_RESOURCES = os.path.join(workflow.basedir, "resources")
+
+
 rule get_genome_fasta:
     output:
         resources.fasta,
@@ -154,7 +161,7 @@ if resources.repeat_mask_url:
     # genes) and would otherwise be dropped by mistake.
     rule prepare_repeat_mask:
         input:
-            nonte="workflow/resources/nonTE_repClasses.txt",
+            nonte=os.path.join(WORKFLOW_RESOURCES, "nonTE_repClasses.txt"),
         output:
             resources.repeat_mask,
         params:
@@ -225,7 +232,7 @@ rule generate_regions:
         runtime=30,
         mem_mb=8000,
     shell:
-        "python workflow/scripts/generate_regions.py "
+        "python " + WORKFLOW_SCRIPTS + "/generate_regions.py "
         "--gtf {input.gtf} "
         "--chrom-sizes {input.chrom_sizes} "
         "--whole-genome-bed {output.whole_genome} "
@@ -271,7 +278,7 @@ rule find_cpgs:
     conda:
         "../envs/deeptools.yaml"
     shell:
-        "python workflow/scripts/find_cpgs.py {input} {output} {log}"
+        "python " + WORKFLOW_SCRIPTS + "/find_cpgs.py {input} {output} {log}"
 
 
 # Create CpG probe BED file
@@ -293,7 +300,7 @@ rule create_cpg_probes:
     conda:
         "../envs/deeptools.yaml"
     shell:
-        "python workflow/scripts/create_cpg_probes.py {input} {output} {params.n} {log}"
+        "python " + WORKFLOW_SCRIPTS + "/create_cpg_probes.py {input} {output} {params.n} {log}"
 
 
 # Sort CpG probe BED file using chrom sizes

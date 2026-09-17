@@ -64,7 +64,7 @@ class Resources:
         elif "test" in genome:
             # The test reads (.test/reads/) are real Bismark-aligned reads
             # subsetted to a small mouse (mm39) locus around Rasgrf1 -- see
-            # .test/make_test_data.sh. They are NOT human, so this genome
+            # .test/make_test_data.py. They are NOT human, so this genome
             # must be built from the matching mini reference carved out
             # alongside them (committed to this repo), not downloaded from
             # Ensembl/UCSC.
@@ -73,10 +73,13 @@ class Resources:
             )
             self.fasta_url = f"{test_base_url}/genome.fa.gz"
             self.gtf_url = f"{test_base_url}/genes.gtf.gz"
-            # No subsetted regulatory/CpG island/RepeatMasker test data exists
-            self.regulatory_gtf_url = None
-            self.cpg_islands_url = None
-            self.repeat_mask_url = None
+            # Subsetted regulatory build / CpG island / RepeatMasker data
+            # all exist (carved from the real mm39 tracks by
+            # make_test_data.py) so the promoter/cpg_islands/repeat_mask
+            # code paths are all exercised in CI
+            self.regulatory_gtf_url = f"{test_base_url}/regulatory_features.gff3.gz"
+            self.cpg_islands_url = f"{test_base_url}/cpgIslandExt.txt.gz"
+            self.repeat_mask_url = f"{test_base_url}/rmsk.txt.gz"
 
         else:
             raise ValueError("Genome {genome} not supported")
