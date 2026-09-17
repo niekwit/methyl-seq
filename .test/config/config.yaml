@@ -27,7 +27,7 @@ boxplot:
   plot: True
   # Number of CpGs per probe
   cpg_n: 50
-  min_reads: 5 # minimum reads covering a CpG to keep
+  min_reads: 1 # minimum reads covering a CpG to keep
   # Standard regions (whole_genome, genic, exon, intron, intergenic, and
   # promoter/cpg_islands where available for the genome) are generated
   # automatically -- see the generate_regions rule in resources.smk.
@@ -44,9 +44,9 @@ metaplot:
 DMR:
   # methylKit settings for DMR calling
   run: True
-  reference_condition: control # should match config/samples.csv
+  reference_condition: WT # should match config/samples.csv
   tile_size: 1000
   step_size: 1000
-  min_per_group: 2
+  min_per_group: 1
   difference_threshold: 25
   qvalue_threshold: 0.01
