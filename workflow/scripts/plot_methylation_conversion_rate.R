@@ -23,8 +23,36 @@ cov_list <- lapply(
   col.names = COV_COL_NAMES
 )
 
-# Combine the list into one data table
+# Combine the list into one data table. fread returns NULL (with a warning)
+# for a zero-byte coverage file -- e.g. a sample with no control-DNA (lambda/
+# pUC19) CpG calls at all, which can legitimately happen for a small dataset
+# (rbindlist already drops NULL list entries and combines the rest; this only
+# matters when EVERY sample's file is empty, leaving no columns at all).
 cov_data <- data.table::rbindlist(cov_list)
+
+if (nrow(cov_data) == 0) {
+  message("No control-DNA CpG calls in any sample -- writing placeholder plot")
+  p <- ggplot() +
+    annotate("text", x = 0, y = 0, label = "No control-DNA CpG calls found") +
+    theme_void()
+  ggsave(snakemake@output[["pdf"]], plot = p, width = 6, height = 4)
+  write.csv(
+    data.frame(
+      contig = character(),
+      sample = character(),
+      Z = integer(),
+      z = integer(),
+      total_calls = integer(),
+      methylation_rate = numeric()
+    ),
+    snakemake@output[["csv"]],
+    row.names = FALSE,
+    quote = FALSE
+  )
+  sink(type = "message")
+  sink(type = "output")
+  quit(save = "no", status = 0)
+}
 
 # Calculate methylation conversion rate per sample and contig
 df <- cov_data %>%
