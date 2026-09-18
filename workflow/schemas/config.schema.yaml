@@ -84,42 +84,47 @@ properties:
         description: "Optional extra custom genomic regions (name -> BED file path) to plot boxplots for, on top of the automatically generated standard regions"
         additionalProperties:
           type: string
-      LINE1:
-        type: object
-        description: >-
-          LINE1 (L1 family) repeat-element boxplot: repeat elements
-          overlapping gene bodies are excluded, remaining LINE1 (repFamily
-          "L1") elements are filtered by min_length, and per-subfamily
-          subsets are additionally plotted (subfamily = repName prefix,
-          matched at a "_" boundary -- "L1MdA" matches repName "L1MdA" or
-          "L1MdA_I"/"L1MdA_II"/... but not "L1MdFanc_I" when configured as
-          "L1MdF"). Also gates whether genic/promoter/cpg_islands regions
-          get transposon-subtracted.
-        properties:
-          plot:
-            type: boolean
-            description: "Whether to generate the separate LINE1 boxplot figure"
-          min_length:
-            type: integer
-            minimum: 0
-            description: "Minimum element length (bp), applied after gene-body exclusion"
-          subfamilies:
-            type: array
-            items:
-              type: string
-            description: >-
-              Optional. LINE1 subfamily name prefixes (repeat_mask.bed
-              repName values) to plot as separate subsets, in this order,
-              alongside the "LINE1" total (all filtered LINE1 elements,
-              always plotted first). If omitted, only the LINE1 total is
-              plotted -- no per-subfamily breakdown.
-        required:
-          - plot
-          - min_length
     required:
       - plot
       - cpg_n
       - min_reads
+    additionalProperties:
+      type: object
+      description: >-
+        TE class block, keyed by a repeat_mask.bed repClass value (e.g.
+        LINE, LTR, SINE, DNA, RC, Retroposon -- genome/data-dependent, not
+        enumerable here). Presence alone enables it and adds it to the
+        combined TE boxplot (results/plots/te_boxplots.pdf): always
+        produces a class-total region named after the block key, plus one
+        region per listed family (if any) and one region per listed
+        subfamily (if any, requires family). Repeat elements overlapping
+        gene bodies are excluded first, then elements are filtered by
+        min_length. Subfamily = repName prefix, matched at a "_" boundary
+        -- "L1MdA" matches repName "L1MdA" or "L1MdA_I"/"L1MdA_II"/... but
+        not "L1MdFanc_I" -- restricted to repFamily in the configured
+        family/families.
+      properties:
+        min_length:
+          type: integer
+          minimum: 0
+          description: "Minimum element length (bp), applied after gene-body exclusion"
+        family:
+          type: string
+          description: >-
+            Optional comma-separated repFamily value(s) to break the class
+            total down by, e.g. "L1" or "L1,L2", in listed order.
+        subfamilies:
+          type: array
+          items:
+            type: string
+          description: >-
+            Optional repName prefixes to further break the family/families
+            down by, in listed order. Requires "family".
+      required:
+        - min_length
+      dependentRequired:
+        subfamilies: [family]
+      additionalProperties: false
   metaplot:
     type: object
     description: "Average % CpG methylation across genomic regions"

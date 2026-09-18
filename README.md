@@ -92,10 +92,27 @@ boxplot:
   plot: True
   cpg_n: 50 # CpGs per probe
   min_reads: 5 # minimum read coverage to keep a CpG
-  regions:
-    # Genomic regions (BED format) to plot. Whole genome is always included.
-    CpG_islands: "config/annotations/hg38_CpG_islands.bed"
-    promoters: "config/annotations/hg38_promoters.bed"
+  # Standard regions (whole_genome, genic, exon, intron, intergenic, and
+  # promoter/cpg_islands where available for the genome) are generated
+  # automatically. Optionally add extra custom regions on top:
+  # regions:
+  #   my_custom_region: "config/annotations/my_custom_region.bed"
+  #
+  # Optionally add transposable-element (TE) class blocks, keyed by a
+  # RepeatMasker repClass value, for a separate combined te_boxplots.pdf.
+  # A class's mere presence enables it. Repeat elements overlapping gene
+  # bodies are excluded first, then filtered by min_length. `family`
+  # (optional, comma-separated repFamily values) and `subfamilies`
+  # (optional, repName prefixes, requires `family`) add further
+  # breakdowns plotted alongside the class total.
+  LINE:
+    min_length: 6000
+    family: L1
+    subfamilies:
+      - L1MdA
+      - L1MdF
+  LTR:
+    min_length: 6000
 
 # DMR analysis (optional)
 DMR:
@@ -107,6 +124,41 @@ DMR:
   difference_threshold: 25
   qvalue_threshold: 0.01
 ```
+
+#### Boxplot regions
+
+`boxplots.pdf` always includes the standard regions generated automatically for the configured genome (`whole_genome`, `genic`, `exon`, `intron`, `intergenic`, and `promoter`/`cpg_islands` where available) — no config needed for these.
+
+To plot additional custom regions alongside them, add a `regions:` map under `boxplot` (name → BED file path, one boxplot facet per entry):
+```yaml
+boxplot:
+  ...
+  regions:
+    my_custom_region: "config/annotations/my_custom_region.bed"
+```
+The BED file just needs `chrom`, `start`, `end` columns. A region name can't reuse a standard region name (`genic`, `exon`, ...) or a TE class/family/subfamily name (below) — the workflow will error out at startup if it does.
+
+#### TE (transposable element) boxplots
+
+Optionally add one or more TE class blocks directly under `boxplot`, keyed by a RepeatMasker `repClass` value (e.g. `LINE`, `LTR`, `SINE`, `DNA`) — a class block's mere presence turns it on. These produce a separate, combined `te_boxplots.pdf` (not mixed into `boxplots.pdf`), one facet per class/family/subfamily, in the order they're configured.
+
+```yaml
+boxplot:
+  ...
+  LINE:
+    min_length: 6000   # required: minimum element length (bp)
+    family: L1          # optional: comma-separated repFamily value(s), e.g. "L1,L2"
+    subfamilies:          # optional: repName prefixes, requires `family`
+      - L1MdA
+      - L1MdF
+  LTR:
+    min_length: 6000       # class-only: no family/subfamily breakdown
+```
+For each class block, repeat elements overlapping a gene body are excluded first, then the remainder is filtered by `min_length`. This gives, in order: the class total (all filtered elements), then one facet per listed `family` (`repFamily` match), then one facet per listed `subfamilies` entry (`repName` prefix match, e.g. `"L1MdA"` matches `"L1MdA"`/`"L1MdA_I"`/`"L1MdA_II"`/... but not `"L1MdAxyz"`, and is restricted to the configured family/families). A class, family, or subfamily name that matches zero elements is a hard error (usually a typo or an overly strict `min_length`) rather than a silently empty facet.
+
+Enabling any TE class block also makes the `genic`/`promoter`/`cpg_islands` regions in `boxplots.pdf` transposon-subtracted, so their CpG signal isn't contaminated by repeat-element methylation patterns.
+
+TE analysis requires a genome with a RepeatMasker track (all supported genomes except `dm6`).
 
 ### 5. Run the workflow
 
@@ -155,7 +207,8 @@ results/
 │   ├── scree.pdf
 │   ├── methylation_conversion_rate.pdf
 │   ├── methylation_conversion_rate.csv
-│   └── boxplots.pdf                 # CpG methylation boxplots (if boxplot.plot: True)
+│   ├── boxplots.pdf                 # CpG methylation boxplots (if boxplot.plot: True)
+│   └── te_boxplots.pdf              # TE class/family/subfamily boxplots (if any boxplot TE class block is configured)
 └── dmrs/                            # Only produced if DMR.run: True
     ├── hypermethylated_DMRs.bed
     ├── hypomethylated_DMRs.bed

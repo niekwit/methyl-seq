@@ -189,32 +189,32 @@ if resources.repeat_mask_url:
 # resources.py) -- see also regions() in common.smk, which builds REGIONS
 # from these outputs plus any optional config-defined custom regions.
 #
-# When the LINE1 boxplot feature is on (validate_line1_config() in
-# common.smk already guarantees resources.repeat_mask is set whenever
-# LINE1_REGIONS is non-empty), genic/promoter/cpg_islands are written to
-# intermediate "_raw" paths here instead of their final bed/ location: the
-# LINE1 pipeline's gene-overlap exclusion (filter_repeat_mask_nongenic,
-# below) needs the ORIGINAL, un-subtracted gene-body span, and the
+# When the TE boxplot feature is on (validate_te_config() in common.smk
+# already guarantees resources.repeat_mask is set whenever TE_REGIONS is
+# non-empty), genic/promoter/cpg_islands are written to intermediate
+# "_raw" paths here instead of their final bed/ location: the TE
+# pipeline's gene-overlap exclusion (filter_repeat_mask_nongenic, below)
+# needs the ORIGINAL, un-subtracted gene-body span, and the
 # subtract_te_from_* rules below then produce the final, transposon-
 # subtracted bed/{region}.bed that the existing boxplot pipeline consumes
 # -- see the plan's "circularity to avoid" note for why these can't be the
 # same file.
-_line1_active = bool(LINE1_REGIONS)
+_te_active = bool(TE_REGIONS)
 
 _region_outputs = {
     "whole_genome": "bed/whole_genome.bed",
-    "genic": "resources/genic_raw.bed" if _line1_active else "bed/genic.bed",
+    "genic": "resources/genic_raw.bed" if _te_active else "bed/genic.bed",
     "exon": "bed/exon.bed",
     "intron": "bed/intron.bed",
     "intergenic": "bed/intergenic.bed",
 }
 if resources.regulatory_gtf:
     _region_outputs["promoter"] = (
-        "resources/promoter_raw.bed" if _line1_active else "bed/promoter.bed"
+        "resources/promoter_raw.bed" if _te_active else "bed/promoter.bed"
     )
 if resources.cpg_islands:
     _region_outputs["cpg_islands"] = (
-        "resources/cpg_islands_raw.bed" if _line1_active else "bed/cpg_islands.bed"
+        "resources/cpg_islands_raw.bed" if _te_active else "bed/cpg_islands.bed"
     )
 
 _region_promoter_args = (
@@ -262,7 +262,7 @@ rule generate_regions:
         "--log {log}"
 
 
-if _line1_active:
+if _te_active:
 
     # Final, transposon-subtracted genic/promoter/cpg_islands region BEDs
     # (what the existing boxplot pipeline actually consumes) -- trims only
@@ -313,10 +313,11 @@ if _line1_active:
             log:
                 "logs/resources/subtract_te_cpg_islands.log",
 
-    # Step 2 of the LINE1 feature: drop any repeat element that overlaps a
+    # Step 2 of the TE feature: drop any repeat element that overlaps a
     # gene body entirely (not a partial trim -- see subtract_te_from_genic
     # above for that), using the RAW (pre-subtraction) genic span so this
     # doesn't circularly depend on genic.bed already having TEs removed.
+    # Shared by every configured TE class block below.
     rule filter_repeat_mask_nongenic:
         input:
             repeat_mask=resources.repeat_mask,
@@ -335,41 +336,57 @@ if _line1_active:
             "bedtools intersect -v -a {input.repeat_mask} -b {input.genic} "
             "> {output} 2> {log}"
 
-    # Steps 3-4 of the LINE1 feature: subset to LINE1 (L1 family) elements
-    # of at least the configured length, then split into the configured
-    # subfamilies (repName prefix, "_"-boundary matched) -- see
-    # generate_line1_regions.py.
-    _line1_subfamilies = list(config["boxplot"]["LINE1"].get("subfamilies", []))
-    _line1_subfamily_beds = [f"bed/{sf}.bed" for sf in _line1_subfamilies]
-    _line1_subfamily_args = " ".join(
-        f"--subfamily-bed {sf}={bed}"
-        for sf, bed in zip(_line1_subfamilies, _line1_subfamily_beds)
-    )
+    # Steps 3-4 of the TE feature, one rule per configured TE class block
+    # (see te_class_blocks() in common.smk): subset to that class's
+    # elements of at least the configured length, then optionally split
+    # into families and, within those, subfamilies (repName prefix,
+    # "_"-boundary matched) -- see generate_te_regions.py. Collisions
+    # between class/family/subfamily names (within or across blocks, or
+    # against standard/custom regions) are already forbidden by
+    # validate_te_config() at Snakefile-parse time, so each rule's outputs
+    # below are guaranteed globally unique.
+    for _class_name, _block in te_class_blocks():
+        _family_list = te_family_list(_block)
+        _subfamilies = list(_block.get("subfamilies", []))
+        _family_beds = {f: f"bed/{f}.bed" for f in _family_list}
+        _subfamily_beds = {s: f"bed/{s}.bed" for s in _subfamilies}
+        _family_args = " ".join(
+            f"--family-bed {f}={p}" for f, p in _family_beds.items()
+        )
+        _subfamily_args = " ".join(
+            f"--subfamily-bed {s}={p}" for s, p in _subfamily_beds.items()
+        )
 
-    rule generate_line1_regions:
-        input:
-            repeat_mask="resources/repeat_mask_nongenic.bed",
-        output:
-            line1="bed/LINE1.bed",
-            subfamily=_line1_subfamily_beds,
-        params:
-            min_length=config["boxplot"]["LINE1"]["min_length"],
-            subfamily_args=_line1_subfamily_args,
-        log:
-            "logs/resources/generate_line1_regions.log",
-        conda:
-            "../envs/deeptools.yaml"
-        threads: 1
-        resources:
-            runtime=30,
-            mem_mb=8000,
-        shell:
-            "python " + WORKFLOW_SCRIPTS + "/generate_line1_regions.py "
-            "--repeat-mask {input.repeat_mask} "
-            "--min-length {params.min_length} "
-            "--line1-bed {output.line1} "
-            "{params.subfamily_args} "
-            "--log {log}"
+        rule:
+            name: f"generate_te_regions_{_class_name}"
+            input:
+                repeat_mask="resources/repeat_mask_nongenic.bed",
+            output:
+                class_bed=f"bed/{_class_name}.bed",
+                family=list(_family_beds.values()),
+                subfamily=list(_subfamily_beds.values()),
+            params:
+                class_name=_class_name,
+                min_length=_block["min_length"],
+                family_args=_family_args,
+                subfamily_args=_subfamily_args,
+            log:
+                f"logs/resources/generate_te_regions_{_class_name}.log",
+            conda:
+                "../envs/deeptools.yaml"
+            threads: 1
+            resources:
+                runtime=30,
+                mem_mb=8000,
+            shell:
+                "python " + WORKFLOW_SCRIPTS + "/generate_te_regions.py "
+                "--repeat-mask {input.repeat_mask} "
+                "--class-name {params.class_name} "
+                "--min-length {params.min_length} "
+                "--class-bed {output.class_bed} "
+                "{params.family_args} "
+                "{params.subfamily_args} "
+                "--log {log}"
 
 
 rule bismark_genome_preparation:

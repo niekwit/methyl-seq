@@ -43,8 +43,8 @@ def targets():
     if config["boxplot"]["plot"]:
         targets.append("results/plots/boxplots.pdf")
 
-    if config["boxplot"].get("LINE1", {}).get("plot", False):
-        targets.append("results/plots/line1_boxplots.pdf")
+    if te_regions():
+        targets.append("results/plots/te_boxplots.pdf")
 
     if config["DMR"]["run"]:
         targets.extend(
@@ -151,47 +151,109 @@ def regions():
 
     extra = config["boxplot"].get("regions", None) or {}
 
-    clashes = set(extra.keys()) & (set(standard) | set(line1_regions()))
+    clashes = set(extra.keys()) & (set(standard) | set(te_regions()))
     if clashes:
         raise ValueError(
             f"config boxplot:regions name(s) {sorted(clashes)} clash with "
-            "automatically generated standard/LINE1 region(s) of the same "
+            "automatically generated standard/TE region(s) of the same "
             "name -- please rename them"
         )
 
     return standard + list(extra.keys())
 
 
-def line1_regions():
+_BOXPLOT_RESERVED = {"plot", "cpg_n", "min_reads", "regions"}
+
+
+def te_class_blocks():
     """
-    LINE1 total + user-configured LINE1 subfamily regions, in configured
-    order, only when config boxplot:LINE1:plot is true -- mirrors
-    regions(), but drives the separate LINE1-family boxplot figure
-    (results/plots/line1_boxplots.pdf) instead of the main one. Returns []
-    when LINE1.plot is false/absent -- REGIONS, targets(), and the region
-    wildcard_constraint are then completely unaffected.
+    Ordered (class_name, block) pairs for every non-reserved key directly
+    under config boxplot -- each such key is a TE class block, keyed by a
+    repeat_mask.bed repClass value (e.g. LINE, LTR, SINE). Order matches
+    config file order (dict insertion order), which is also plotting
+    order in the combined TE boxplot.
     """
-    line1_cfg = config["boxplot"].get("LINE1", {})
-    if not line1_cfg.get("plot", False):
+    return [
+        (name, block)
+        for name, block in config["boxplot"].items()
+        if name not in _BOXPLOT_RESERVED
+    ]
+
+
+def te_family_list(block):
+    """
+    Parses a TE class block's `family` (an optional comma-separated
+    string, e.g. "L1,L2") into an ordered, de-duplicated list. [] if
+    `family` is absent.
+    """
+    raw = block.get("family")
+    if not raw:
         return []
-    return ["LINE1"] + list(line1_cfg.get("subfamilies", []))
+    seen = []
+    for f in raw.split(","):
+        f = f.strip()
+        if f and f not in seen:
+            seen.append(f)
+    return seen
 
 
-def validate_line1_config(line1_regions, resources):
+def te_regions():
     """
-    Checks config boxplot:LINE1:plot is only enabled for a genome that
-    actually has a RepeatMasker track (resources.repeat_mask is None e.g.
-    for dm6). Whether a configured subfamily actually matches any elements
-    in repeat_mask.bed can't be checked here (repeat_mask.bed is only
-    materialised by a job at DAG-execution time) -- that hard-errors
-    inside generate_line1_regions.py instead, mirroring this function's
+    Ordered list of every TE region name (class total, then family
+    totals, then subfamily totals, per block) across all configured TE
+    class blocks under config boxplot, in config order. A class block's
+    mere presence enables it -- there is no separate plot flag per block.
+    Returns [] when no TE class blocks are configured -- REGIONS,
+    targets(), and the region wildcard_constraint are then completely
+    unaffected, driving the separate combined TE boxplot figure
+    (results/plots/te_boxplots.pdf) instead of the main one.
+    """
+    names = []
+    for class_name, block in te_class_blocks():
+        names.append(class_name)
+        names.extend(te_family_list(block))
+        names.extend(block.get("subfamilies", []))
+    return names
+
+
+def validate_te_config(te_regions, other_regions, resources):
+    """
+    Static (config-only) checks at Snakefile-parse time:
+    1. TE class blocks require a genome with a RepeatMasker track
+       (resources.repeat_mask is None e.g. for dm6).
+    2. No TE region name (class/family/subfamily, across all blocks)
+       collides with another TE region name, or with a standard/custom
+       region name from regions().
+    Whether a configured class/family/subfamily actually matches any
+    elements in repeat_mask.bed can't be checked here (repeat_mask.bed is
+    only materialised by a job at DAG-execution time) -- that hard-errors
+    inside generate_te_regions.py instead, mirroring this function's
     relationship to validate_reference_condition() above.
     """
-    if line1_regions and resources.repeat_mask is None:
+    if te_regions and resources.repeat_mask is None:
         raise ValueError(
-            f"config boxplot:LINE1:plot is true, but genome '{resources.genome}' "
-            "has no RepeatMasker track available for this pipeline "
-            "(Resources.repeat_mask_url is not set) -- LINE1 analysis is not possible."
+            f"config boxplot has TE class block(s), but genome "
+            f"'{resources.genome}' has no RepeatMasker track available "
+            "for this pipeline (Resources.repeat_mask_url is not set) -- "
+            "TE region analysis is not possible."
+        )
+
+    seen, dupes = set(), set()
+    for name in te_regions:
+        (dupes if name in seen else seen).add(name)
+    if dupes:
+        raise ValueError(
+            f"TE region name(s) {sorted(dupes)} are produced by more than "
+            "one boxplot class/family/subfamily entry -- region names must "
+            "be unique across all TE class blocks; rename the colliding "
+            "family/subfamily value(s) or class block key(s)."
+        )
+
+    clashes = set(te_regions) & set(other_regions)
+    if clashes:
+        raise ValueError(
+            f"TE region name(s) {sorted(clashes)} clash with standard/"
+            "custom boxplot region(s) of the same name -- please rename them."
         )
 
 

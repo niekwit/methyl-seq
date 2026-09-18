@@ -173,27 +173,29 @@ rule plot_boxplot:
         "../scripts/plot_boxplot.R"
 
 
-# Combine and plot LINE1 boxplot data (its own figure, separate from the
-# main boxplots.pdf above) -- only defined when config boxplot:LINE1:plot
-# is true. filter_cpg_probes_for_regions/boxplot_data above need no
-# changes: they're already generic over {region}, and bed/LINE1.bed /
-# bed/{subfamily}.bed (from generate_line1_regions in resources.smk) flow
-# through them exactly like any other region, since LINE1_REGIONS is
-# included in the Snakefile's global `region` wildcard_constraint.
+# Combine and plot TE boxplot data (its own figure, separate from the
+# main boxplots.pdf above) -- only defined when at least one TE class
+# block is configured under boxplot (see te_class_blocks() in
+# common.smk). filter_cpg_probes_for_regions/boxplot_data above need no
+# changes: they're already generic over {region}, and bed/{class}.bed,
+# bed/{family}.bed, bed/{subfamily}.bed (from the generate_te_regions_*
+# rules in resources.smk) flow through them exactly like any other
+# region, since TE_REGIONS is included in the Snakefile's global
+# `region` wildcard_constraint.
 # -----------------------------------------------------
-if LINE1_REGIONS:
+if TE_REGIONS:
 
-    rule combine_line1_boxplot_data:
+    rule combine_te_boxplot_data:
         input:
             data=expand(
                 "results/boxplot/CpG_methylation_{condition}_{region}.txt",
                 condition=CONDITIONS,
-                region=LINE1_REGIONS,
+                region=TE_REGIONS,
             ),
         output:
-            "results/boxplot/CpG_methylation_all_conditions_line1_regions.txt",
+            "results/boxplot/CpG_methylation_all_conditions_te_regions.txt",
         log:
-            "logs/boxplot/combine_line1_data.log",
+            "logs/boxplot/combine_te_data.log",
         threads: 1
         resources:
             runtime=10,
@@ -204,13 +206,13 @@ if LINE1_REGIONS:
             "cat {input.data} | "
             r"sed 's/^\s*//;s/\s/\t/g' > {output}"
 
-    use rule plot_boxplot as plot_line1_boxplot with:
+    use rule plot_boxplot as plot_te_boxplot with:
         input:
-            "results/boxplot/CpG_methylation_all_conditions_line1_regions.txt",
+            "results/boxplot/CpG_methylation_all_conditions_te_regions.txt",
         output:
-            pdf="results/plots/line1_boxplots.pdf",
-            csv="results/plots/line1_boxplots_data.csv",
+            pdf="results/plots/te_boxplots.pdf",
+            csv="results/plots/te_boxplots_data.csv",
         params:
-            regions=LINE1_REGIONS,
+            regions=TE_REGIONS,
         log:
-            "logs/boxplot/plot_line1_boxplots.log",
+            "logs/boxplot/plot_te_boxplots.log",
