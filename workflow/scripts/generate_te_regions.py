@@ -90,10 +90,13 @@ def load_class(repeat_mask, class_name, min_length):
     return cls
 
 
-def write_bed4(df, out_bed, name_col="repName"):
-    df[["chrom", "start", "end", name_col]].to_csv(
-        out_bed, sep="\t", header=False, index=False
-    )
+def write_bed6(df, out_bed, name_col="repName"):
+    # Score/strand are kept (unlike the standard, non-TE region beds from
+    # generate_regions.py) because line1_annotate_utrs_orfs.py needs strand
+    # to tell an element's 5' end from its 3' end.
+    out = df[["chrom", "start", "end", name_col, "strand"]].copy()
+    out.insert(4, "score", ".")
+    out.to_csv(out_bed, sep="\t", header=False, index=False)
 
 
 def family_subset(cls, name, class_name, min_length, src):
@@ -202,14 +205,14 @@ def main():
     )
 
     cls = load_class(args.repeat_mask, args.class_name, args.min_length)
-    write_bed4(cls, args.class_bed)
+    write_bed6(cls, args.class_bed)
     logging.info(f"Wrote {len(cls)} '{args.class_name}' intervals to {args.class_bed}")
 
     for name, out_bed in args.family_beds:
         subset = family_subset(
             cls, name, args.class_name, args.min_length, args.repeat_mask
         )
-        write_bed4(subset, out_bed)
+        write_bed6(subset, out_bed)
         logging.info(f"Wrote {len(subset)} '{name}' intervals to {out_bed}")
 
     family_names = {name for name, _ in args.family_beds}
@@ -217,7 +220,7 @@ def main():
         subset = subfamily_subset(
             cls, name, family_names, args.class_name, args.min_length, args.repeat_mask
         )
-        write_bed4(subset, out_bed)
+        write_bed6(subset, out_bed)
         logging.info(f"Wrote {len(subset)} '{name}' intervals to {out_bed}")
 
     logging.info("Done.")

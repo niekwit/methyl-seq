@@ -111,6 +111,10 @@ boxplot:
     subfamilies:
       - L1MdA
       - L1MdF
+    # Optional: 5' UTR vs. remainder methylation boxplot for this family
+    # (requires family to be exactly "L1")
+    # utr_analysis:
+    #   genbank: config/annotations/L1_consensus.gb
   LTR:
     min_length: 6000
 
@@ -160,6 +164,31 @@ Enabling any TE class block also makes the `genic`/`promoter`/`cpg_islands` regi
 
 TE analysis requires a genome with a RepeatMasker track (all supported genomes except `dm6`).
 
+#### LINE1 5' UTR vs. remainder boxplots
+
+Optionally add a `utr_analysis:` sub-block under a TE class block to split each near-full-length LINE1 (L1) element into its 5' UTR and "remainder" (ORF1 + linker + ORF2 + 3' UTR), and boxplot %CpG methylation of the two separately. This is only valid when that class block's `family` is exactly `L1` (LINE1 is the only TE with this ORF1/ORF2 UTR architecture) — the workflow errors out at startup otherwise.
+
+```yaml
+boxplot:
+  ...
+  LINE:
+    min_length: 6000
+    family: L1
+    subfamilies:
+      - L1MdA
+      - L1MdF
+    utr_analysis:
+      genbank: config/annotations/L1_consensus.gb   # required
+      min_identity: 0.6    # optional, default 0.6
+      min_coverage: 0.5    # optional, default 0.5
+      min_mapq: 20          # optional, default 20
+      single_orf: false     # optional, default false
+```
+
+`genbank` must be a GenBank record for a consensus L1 with `CDS` features whose `/product` qualifiers are exactly `ORF1` and `ORF2` (e.g. mouse [M13002](https://www.ncbi.nlm.nih.gov/nuccore/M13002), human [AF148856](https://www.ncbi.nlm.nih.gov/nuccore/AF148856)). For each near-full-length L1 element (the configured `family`'s own filtered set), ORF1/ORF2 are located on that element's own sequence via minimap2; `min_identity`/`min_coverage` control how confident a hit must be, and `min_mapq` its minimum mapping quality. By default an element needs both ORFs confidently located to be annotated; `single_orf: true` also keeps elements where only one was found (the "UTR" on the missing ORF's side then also contains that ORF and the inter-ORF sequence).
+
+This produces a separate `results/plots/te_5utr_boxplots.pdf`, faceted by TE (the family total, then its configured subfamilies) x region (5' UTR / L1 remainder) — each L1 element's UTR/remainder span is its own boxplot data point (not split into the CpG-probe-sized chunks the other boxplots use).
+
 ### 5. Run the workflow
 
 ```bash
@@ -208,7 +237,8 @@ results/
 │   ├── methylation_conversion_rate.pdf
 │   ├── methylation_conversion_rate.csv
 │   ├── boxplots.pdf                 # CpG methylation boxplots (if boxplot.plot: True)
-│   └── te_boxplots.pdf              # TE class/family/subfamily boxplots (if any boxplot TE class block is configured)
+│   ├── te_boxplots.pdf              # TE class/family/subfamily boxplots (if any boxplot TE class block is configured)
+│   └── te_5utr_boxplots.pdf         # LINE1 5' UTR vs. remainder boxplots (if any boxplot TE class block configures utr_analysis)
 └── dmrs/                            # Only produced if DMR.run: True
     ├── hypermethylated_DMRs.bed
     ├── hypomethylated_DMRs.bed

@@ -120,10 +120,58 @@ properties:
           description: >-
             Optional repName prefixes to further break the family/families
             down by, in listed order. Requires "family".
+        utr_analysis:
+          type: object
+          description: >-
+            Optional 5' UTR vs. remainder %CpG methylation boxplot for
+            LINE1 elements (ORF1/ORF2 located via minimap2 against a
+            user-supplied GenBank consensus record). Only valid when this
+            block's "family" is exactly "L1". Produces
+            results/plots/te_5utr_boxplots.pdf, faceted by TE (this
+            family's total + its configured subfamilies) x region (5'
+            UTR / L1 remainder).
+          properties:
+            genbank:
+              type: string
+              description: >-
+                Path to a GenBank record with ORF1 and ORF2 CDS features
+                for a consensus LINE1 (the /product qualifiers must be
+                exactly "ORF1" and "ORF2").
+            min_identity:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: "Minimum ORF hit identity (matched/aligned bases), default 0.6"
+            min_coverage:
+              type: number
+              minimum: 0
+              maximum: 1
+              description: >-
+                Minimum fraction of the consensus ORF length covered by
+                the hit, default 0.5
+            min_mapq:
+              type: integer
+              minimum: 0
+              description: "Minimum minimap2 mapping quality for an ORF hit, default 20"
+            single_orf:
+              type: boolean
+              description: >-
+                Also annotate elements where only one of ORF1/ORF2 is
+                confidently located, default false
+          required:
+            - genbank
+          additionalProperties: false
       required:
         - min_length
       dependentRequired:
         subfamilies: [family]
+      if:
+        required:
+          - utr_analysis
+      then:
+        properties:
+          family:
+            const: "L1"
       additionalProperties: false
   metaplot:
     type: object

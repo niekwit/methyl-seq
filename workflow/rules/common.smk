@@ -46,6 +46,9 @@ def targets():
     if te_regions():
         targets.append("results/plots/te_boxplots.pdf")
 
+    if te_utr_names():
+        targets.append("results/plots/te_5utr_boxplots.pdf")
+
     if resources.icr_regions:
         targets.append("results/plots/icr_heatmap.pdf")
 
@@ -258,6 +261,52 @@ def validate_te_config(te_regions, other_regions, resources):
             f"TE region name(s) {sorted(clashes)} clash with standard/"
             "custom boxplot region(s) of the same name -- please rename them."
         )
+
+
+def te_utr_class_blocks():
+    """
+    (class_name, block) pairs for every TE class block with a
+    `utr_analysis` sub-block configured -- see te_class_blocks(). Each
+    such block's `family` must be exactly "L1" (LINE1 is the only TE with
+    the ORF1/ORF2 UTR architecture this analysis relies on), enforced in
+    validate_te_utr_config().
+    """
+    return [
+        (name, block) for name, block in te_class_blocks() if "utr_analysis" in block
+    ]
+
+
+def te_utr_names():
+    """
+    Ordered list of every TE name (the family total, then its configured
+    subfamilies) across all te_utr_class_blocks(). Each gets its own
+    bed/{name}_5UTR_remainder.bed and a facet in te_5utr_boxplots.pdf.
+    Returns [] when no class block configures utr_analysis.
+    """
+    names = []
+    for _, block in te_utr_class_blocks():
+        names.append(te_family_list(block)[0])
+        names.extend(block.get("subfamilies", []))
+    return names
+
+
+def validate_te_utr_config(te_utr_class_blocks):
+    """
+    Static (config-only) check at Snakefile-parse time: a `utr_analysis`
+    sub-block requires its class block's `family` to be exactly "L1" --
+    not a comma-list containing L1, and not absent -- since ORF1/ORF2 UTR
+    annotation is LINE1-specific.
+    """
+    for class_name, block in te_utr_class_blocks:
+        families = te_family_list(block)
+        if families != ["L1"]:
+            got = repr(block.get("family"))
+            raise ValueError(
+                f"boxplot:{class_name}:utr_analysis requires "
+                f"boxplot:{class_name}:family to be exactly 'L1' "
+                f"(got: {got}) -- LINE1 is the only TE "
+                "with the ORF1/ORF2 UTR architecture this analysis relies on."
+            )
 
 
 def meta_regions():

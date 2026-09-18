@@ -33,11 +33,13 @@ boxplot:
   # automatically -- see the generate_regions rule in resources.smk.
   LINE:
     min_length: 100
-    family: L1,L2
+    family: L1
     subfamilies:
       - L1MdA
       - L1MdF
       - L1MdTf
+    utr_analysis:
+      genbank: resources/L1_consensus_mm.gb
   LTR:
     min_length: 100
 

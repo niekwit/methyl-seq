@@ -25,6 +25,8 @@ REGIONS = regions()
 validate_reference_condition(config["DMR"]["reference_condition"], CONDITIONS)
 TE_REGIONS = te_regions()
 validate_te_config(TE_REGIONS, REGIONS, resources)
+UTR_TE_NAMES = te_utr_names()
+validate_te_utr_config(te_utr_class_blocks())
 
 
 # Condition and region names can themselves contain underscores (e.g. a
@@ -48,6 +50,7 @@ include: "rules/bigwig.smk"
 include: "rules/icr.smk"
 include: "rules/process_methylation_calls.smk"
 include: "rules/boxplot.smk"
+include: "rules/te_utr.smk"
 include: "rules/dmrs.smk"
 
 
