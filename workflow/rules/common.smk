@@ -46,6 +46,9 @@ def targets():
     if te_regions():
         targets.append("results/plots/te_boxplots.pdf")
 
+    if resources.icr_regions:
+        targets.append("results/plots/icr_heatmap.pdf")
+
     if config["DMR"]["run"]:
         targets.extend(
             [

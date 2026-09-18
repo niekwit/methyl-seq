@@ -1,5 +1,20 @@
 import os
 
+# Checked-in static resource used directly (no download rule needed) by the
+# "mm39" branch below -- workflow/resources/ is always reachable via this
+# module's own file location regardless of the analysis --directory, unlike
+# a bare "workflow/resources/..." relative path which would only resolve by
+# accident (see the same concern documented for WORKFLOW_SCRIPTS/
+# WORKFLOW_RESOURCES in resources.smk).
+_ICR_REGIONS_MM39 = os.path.normpath(
+    os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "..",
+        "resources",
+        "icr_regions_mm39.bed",
+    )
+)
+
 
 class Resources:
     """Gets URLs and file names of fasta and GTF files for a given genome and build"""
@@ -10,6 +25,15 @@ class Resources:
     def __init__(self, genome, build):
         self.genome = genome
         self.build = build
+
+        # Paternally-imprinted-region (ICR) heatmap: mm39 only for now (a
+        # fixed, hand-curated set of 4 ICRs -- see
+        # workflow/resources/icr_regions_mm39.bed), plus a single-region
+        # (Rasgrf1 only) subset for the "test" genome in its own shifted
+        # mini-genome coordinates, so this code path is exercised in CI.
+        # None (feature off) for every other genome; set below.
+        self.icr_regions_url = None
+        self.icr_regions = None
 
         # Base URLs
         base_url_ens = f"https://ftp.ensembl.org/pub/release-{build}/"
@@ -47,6 +71,9 @@ class Resources:
             self.regulatory_gtf_url = f"{base_url_ens}regulation/mus_musculus/{name}/annotation/Mus_musculus.{name}.regulatory_features.v{build}.gff3.gz"
             self.cpg_islands_url = f"https://hgdownload.soe.ucsc.edu/goldenPath/{ucsc_build}/database/cpgIslandExt.txt.gz"
             self.repeat_mask_url = f"https://hgdownload.soe.ucsc.edu/goldenPath/{ucsc_build}/database/rmsk.txt.gz"
+            if genome == "mm39":
+                # Static, already-checked-in file -- no download rule needed
+                self.icr_regions = _ICR_REGIONS_MM39
 
         elif "dm" in genome:
             if genome == "dm6":
@@ -80,6 +107,10 @@ class Resources:
             self.regulatory_gtf_url = f"{test_base_url}/regulatory_features.gff3.gz"
             self.cpg_islands_url = f"{test_base_url}/cpgIslandExt.txt.gz"
             self.repeat_mask_url = f"{test_base_url}/rmsk.txt.gz"
+            # Single-region (Rasgrf1 only) subset, in the mini genome's own
+            # shifted coordinates -- see .test/resources/icr_regions.bed
+            self.icr_regions_url = f"{test_base_url}/icr_regions.bed"
+            self.icr_regions = "resources/icr_regions.bed"
 
         else:
             raise ValueError("Genome {genome} not supported")

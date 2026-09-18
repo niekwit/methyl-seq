@@ -8,6 +8,7 @@ dependencies:
   - python=3.12
   - bioconda::deeptools=3.5.6
   - bioconda::ucsc-bedgraphtobigwig=482
+  - bioconda::ucsc-bigwigaverageoverbed=469
   - bioconda::bedtools=2.31.1
   - bioconda::pybedtools=0.10.0
   - bioconda::snakemake=8.25.5
