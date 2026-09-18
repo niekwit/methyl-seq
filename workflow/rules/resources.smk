@@ -238,6 +238,7 @@ rule generate_regions:
     output:
         **_region_outputs,
     params:
+        script=os.path.join(WORKFLOW_SCRIPTS, "generate_regions.py"),
         promoter_args=_region_promoter_args,
         cpg_args=_region_cpg_args,
     log:
@@ -249,7 +250,7 @@ rule generate_regions:
         runtime=30,
         mem_mb=8000,
     shell:
-        "python " + WORKFLOW_SCRIPTS + "/generate_regions.py "
+        "python {params.script} "
         "--gtf {input.gtf} "
         "--chrom-sizes {input.chrom_sizes} "
         "--whole-genome-bed {output.whole_genome} "
@@ -366,6 +367,7 @@ if _te_active:
                 family=list(_family_beds.values()),
                 subfamily=list(_subfamily_beds.values()),
             params:
+                script=os.path.join(WORKFLOW_SCRIPTS, "generate_te_regions.py"),
                 class_name=_class_name,
                 min_length=_block["min_length"],
                 family_args=_family_args,
@@ -379,7 +381,7 @@ if _te_active:
                 runtime=30,
                 mem_mb=8000,
             shell:
-                "python " + WORKFLOW_SCRIPTS + "/generate_te_regions.py "
+                "python {params.script} "
                 "--repeat-mask {input.repeat_mask} "
                 "--class-name {params.class_name} "
                 "--min-length {params.min_length} "
@@ -413,6 +415,8 @@ rule find_cpgs:
         resources.filtered_fasta,
     output:
         "resources/cpg_sites.bed",
+    params:
+        script=os.path.join(WORKFLOW_SCRIPTS, "find_cpgs.py"),
     log:
         "logs/resources/find_cpgs.log",
     threads: 10
@@ -422,7 +426,7 @@ rule find_cpgs:
     conda:
         "../envs/deeptools.yaml"
     shell:
-        "python " + WORKFLOW_SCRIPTS + "/find_cpgs.py {input} {output} {log}"
+        "python {params.script} {input} {output} {log}"
 
 
 # Create CpG probe BED file
@@ -433,6 +437,7 @@ rule create_cpg_probes:
     output:
         "resources/cpg_probes.bed",
     params:
+        script=os.path.join(WORKFLOW_SCRIPTS, "create_cpg_probes.py"),
         # Number of CpGs per probe
         n=config["boxplot"]["cpg_n"],
     log:
@@ -444,7 +449,7 @@ rule create_cpg_probes:
     conda:
         "../envs/deeptools.yaml"
     shell:
-        "python " + WORKFLOW_SCRIPTS + "/create_cpg_probes.py {input} {output} {params.n} {log}"
+        "python {params.script} {input} {output} {params.n} {log}"
 
 
 # Sort CpG probe BED file using chrom sizes

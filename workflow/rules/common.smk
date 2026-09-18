@@ -86,10 +86,10 @@ def import_samples(paired_end):
 
     if paired_end:
         fastq = glob.glob("reads/*_R1_001.fastq.gz")
-        samples = [f.split("/")[-1].replace("_R1_001.fastq.gz", "") for f in fastq]
+        samples = [os.path.basename(f).replace("_R1_001.fastq.gz", "") for f in fastq]
     else:
         fastq = glob.glob("reads/*.fastq.gz")
-        samples = [f.split("/")[-1].replace(".fastq.gz", "") for f in fastq]
+        samples = [os.path.basename(f).replace(".fastq.gz", "") for f in fastq]
 
     return samples
 
