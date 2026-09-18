@@ -176,9 +176,9 @@ if resources.repeat_mask_url:
             "zcat {output}.gz | "
             "awk -F'\\t' -v OFS='\\t' "
             "'NR==FNR {{nonte[$1]=1; next}} "
-            "{{sub(/^chr/, \"\", $6); if ($6 !~ /^([0-9]+|X|Y|MT)$/) next; "
+            '{{sub(/^chr/, "", $6); if ($6 !~ /^([0-9]+|X|Y|MT)$/) next; '
             "if ($12 in nonte) next; "
-            "print $6, $7, $8, $11, \".\", $10, $12, $13}}' "
+            'print $6, $7, $8, $11, ".", $10, $12, $13}}\' '
             "{input.nonte} - "
             "> {output} 2>> {log}"
 
@@ -359,7 +359,8 @@ if _te_active:
         )
 
         rule:
-            name: f"generate_te_regions_{_class_name}"
+            name:
+                f"generate_te_regions_{_class_name}"
             input:
                 repeat_mask="resources/repeat_mask_nongenic.bed",
             output:
@@ -470,4 +471,3 @@ rule sort_cpg_probes:
         "../envs/deeptools.yaml"
     shell:
         "bedtools sort -i {input.probes} -g {input.cs} > {output} 2> {log}"
-
