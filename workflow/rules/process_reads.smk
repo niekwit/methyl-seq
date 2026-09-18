@@ -29,6 +29,18 @@ if PAIRED_END:
     rule align_pe:
         input:
             dir="resources/Bisulfite_Genome",
+            # Not referenced directly in the shell command below: bismark's
+            # aligner does its own <*.fa> scan of --genome (resources/) at
+            # runtime to load genomic sequence for methylation calling, a
+            # dependency Snakemake can't see from "dir" alone. Without this,
+            # --all-temp (used in CI) can delete combined_genome.fa right
+            # after bismark_genome_preparation finishes with it -- before
+            # this rule runs -- and the aligner then silently falls back to
+            # whatever other *.fa/*.fa.gz happens to sit in resources/ (e.g.
+            # the raw, uncombined genome.fa.gz), loading only that genome
+            # and discarding every read outside it ("genomic sequence could
+            # not be extracted").
+            fasta="resources/combined_genome.fa",
             r1="results/trimmed/{sample}_R1.fq.gz",
             r2="results/trimmed/{sample}_R2.fq.gz",
         output:
@@ -80,6 +92,8 @@ else:
     rule align_se:
         input:
             dir="resources/Bisulfite_Genome",
+            # See the matching comment in align_pe above.
+            fasta="resources/combined_genome.fa",
             fq="results/trimmed/{sample}.fq.gz",
         output:
             bam="results/bismark/{sample}/{sample}_bismark_bt2.bam",
@@ -133,6 +147,10 @@ rule deduplication:
 rule methylation_extraction:
     input:
         bam="results/bismark/{sample}/{sample}.deduplicated.bam",
+        # See the matching comment in align_pe (process_reads.smk):
+        # --cytosine_report reads --genome_folder's *.fa directly too, a
+        # dependency Snakemake can't otherwise see from "bam" alone.
+        fasta="resources/combined_genome.fa",
     output:
         sreport="results/bismark/{sample}/{sample}.deduplicated_splitting_report.txt",
         mbias="results/bismark/{sample}/{sample}.deduplicated.M-bias.txt",
@@ -172,6 +190,9 @@ rule methylation_extraction:
 rule nucleotide_coverage:
     input:
         bam="results/bismark/{sample}/{sample}.deduplicated.bam",
+        # See the matching comment in align_pe (process_reads.smk):
+        # bam2nuc reads --genome_folder's *.fa directly too.
+        fasta="resources/combined_genome.fa",
     output:
         stats="results/bismark/{sample}/{sample}.deduplicated.nucleotide_stats.txt",
     params:
