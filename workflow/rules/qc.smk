@@ -68,8 +68,13 @@ rule cpg_coverage_control_dna:
     conda:
         "../envs/bismark.yaml"
     shell:
+        # grep -E exits 1 (not an error here) when a sample has zero control-DNA
+        # calls at all -- under snakemake's shell strict mode (set -e -o
+        # pipefail) that would otherwise fail the whole pipeline, even though a
+        # resulting empty output.cov is the correct, expected outcome (see NOTE
+        # above -- missing counts are added back as zero downstream in R).
         "zcat {input.cpgot} {input.cpgob} | "
-        "grep -E 'phage_lambda|plasmid_puc19c' | "
+        "(grep -E 'phage_lambda|plasmid_puc19c' || true) | "
         "awk -v OFS=\"\t\" '{{print $3, $4, $5}}' | "
         "sort -k1,1 -k2,2n | "
         "uniq -c | "
