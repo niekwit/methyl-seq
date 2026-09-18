@@ -95,9 +95,13 @@ class Resources:
             # must be built from the matching mini reference carved out
             # alongside them (committed to this repo), not downloaded from
             # Ensembl/UCSC.
-            test_base_url = (
-                "https://github.com/niekwit/methyl-seq/raw/main/.test/resources"
-            )
+            # Pinned to a commit SHA, not "main" -- a floating branch ref
+            # means every CI run refetches whatever "main" happens to be at
+            # request time, which can race against this same session's own
+            # pushes (or a stale raw.githubusercontent.com CDN response) and
+            # is not reproducible. Update this SHA when .test/resources/
+            # content actually changes.
+            test_base_url = "https://github.com/niekwit/methyl-seq/raw/1d9706dd59004b62ecb969c9c55198afdbf391e6/.test/resources"
             self.fasta_url = f"{test_base_url}/genome.fa.gz"
             self.gtf_url = f"{test_base_url}/genes.gtf.gz"
             # Subsetted regulatory build / CpG island / RepeatMasker data
