@@ -354,7 +354,15 @@ def make_mini_genome(args):
     if args.keep_coords:
         seq = "N" * (args.win_start - 1) + seq
 
-    out_fasta = RES_DIR / "genome.fa"
+    # Plain-text copy for manual inspection uses a ".fa.txt" name, not
+    # ".fa": bismark_genome_preparation scans its whole target directory
+    # for *.fa files (not just the one it's given), and .test/resources/
+    # doubles as the pipeline's own working "resources/" dir when run with
+    # --directory .test, so a checked-in "genome.fa" sitting there
+    # alongside the pipeline's own resources/combined_genome.fa gets
+    # picked up too -- a real CI failure ("chromosome name '9' already
+    # exists") this naming avoids entirely.
+    out_fasta = RES_DIR / "genome.fa.txt"
     with open(out_fasta, "wt") as out:
         out.write(f">{args.mini_contig}\n")
         out.write("\n".join(textwrap.wrap(seq, 60)))
@@ -363,9 +371,10 @@ def make_mini_genome(args):
 
     # resources.py's "test" genome branch fetches genome.fa.gz (matching
     # every other genome's fasta_url, which always points at a .gz) -- keep
-    # this in sync with the plain genome.fa written above, the same way
+    # this in sync with the plain genome.fa.txt written above, the same way
     # carve_annotation() below does for the annotation tracks.
-    with open(out_fasta, "rb") as f_in, gzip.open(f"{out_fasta}.gz", "wb") as f_out:
+    gz_fasta = RES_DIR / "genome.fa.gz"
+    with open(out_fasta, "rb") as f_in, gzip.open(gz_fasta, "wb") as f_out:
         f_out.writelines(f_in)
 
     chrom_sizes = RES_DIR / "chrom.sizes"
@@ -382,8 +391,8 @@ def make_mini_genome(args):
         )
 
     print(
-        f"   {out_fasta}(.gz)  (contig '{args.mini_contig}', coordinate offset "
-        f"applied to test data = {args.offset})"
+        f"   {out_fasta}, {gz_fasta}  (contig '{args.mini_contig}', coordinate "
+        f"offset applied to test data = {args.offset})"
     )
     print(f"   {target_bed}  (target locus in mini-genome coordinates)")
 
