@@ -47,6 +47,7 @@ jobs:
         with:
           directory: .test
           snakefile: workflow/Snakefile
+          snakemake-version: "8.25.5"
           args: "--sdm conda --show-failed-logs --cores 2 --conda-cleanup-pkgs cache --all-temp"
 
       - name: Test report
