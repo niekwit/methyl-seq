@@ -36,6 +36,9 @@ rule bigwig_summary:
         bw=expand("results/bismark/{sample}/{sample}.deduplicated.bw", sample=SAMPLES),
     output:
         "results/deeptools/bigwig_summary.npz",
+    params:
+        binSize=config["deeptools"]["bigwig_summary"]["binSize"],
+        extra=config["deeptools"]["bigwig_summary"]["extra"],
     log:
         "logs/deeptools/bigwig_summary.log",
     threads: 12
@@ -46,6 +49,8 @@ rule bigwig_summary:
     shell:
         "multiBigwigSummary bins "
         "--bwfiles {input.bw} "
+        "--binSize {params.binSize} "
+        "{params.extra} "
         "--outFile {output} "
         "2> {log}"
 
@@ -96,26 +101,6 @@ rule plotPCA:
         "../envs/R.yaml"
     script:
         "../scripts/plot_PCA.R"
-
-
-# Decompress bedGraph files for averaging
-# -----------------------------------------------------
-# rule decompress_bedgraph:
-#    input:
-#        bg="results/bismark/{sample}/{sample}.deduplicated.bedGraph.gz",
-#    output:
-#        # Change extension to .bg for wiggletools compatibility
-#        bg=temp("results/temp/{sample}.bg"),
-#    resources:
-#        runtime=15,
-#        mem_mb=4000,
-#    threads: 4
-#    log:
-#        "logs/decompress_bedgraph/{sample}.log",
-#    conda:
-#        "../envs/deeptools.yaml"
-#    shell:
-#        "pigz -p {threads} -dc {input.bg} > {output.bg} 2> {log}"
 
 
 # Create average BedGraph files
