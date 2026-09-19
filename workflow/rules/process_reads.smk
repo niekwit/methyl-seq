@@ -47,6 +47,7 @@ if PAIRED_END:
             bam="results/bismark/{sample}/{sample}_R1_bismark_bt2_pe.bam",
         params:
             outdir=lambda wc, output: os.path.dirname(output.bam),
+            extra=config["bismark"]["align"],
         log:
             "logs/bismark_align/{sample}.log",
         threads: 12
@@ -62,6 +63,7 @@ if PAIRED_END:
             "-1 {input.r1} "
             "-2 {input.r2} "
             "-o {params.outdir} "
+            "{params.extra} "
             "2> {log}"
 
 else:
@@ -99,6 +101,7 @@ else:
             bam="results/bismark/{sample}/{sample}_bismark_bt2.bam",
         params:
             outdir=lambda wc, output: os.path.dirname(output.bam),
+            extra=config["bismark"]["align"],
         log:
             "logs/bismark_align/{sample}.log",
         threads: 12
@@ -112,6 +115,7 @@ else:
             "--genome resources/ "
             "-p {threads} "
             "{input.fq} "
+            "{params.extra} "
             "2> {log}"
 
 
@@ -125,6 +129,7 @@ rule deduplication:
     params:
         outdir=lambda wc, output: os.path.dirname(output.bam),
         paired="--paired" if PAIRED_END else "",
+        extra=config["bismark"]["deduplicate"],
     log:
         "logs/deduplication/{sample}.log",
     threads: 4
@@ -139,6 +144,7 @@ rule deduplication:
         "--output_dir {params.outdir} "
         "--bam "
         "{input.bam} "
+        "{params.extra} "
         "2> {log}"
 
 
@@ -162,6 +168,13 @@ rule methylation_extraction:
         outdir=lambda wc, output: os.path.dirname(output.sreport),
         genome_abs=os.path.abspath("resources/"),
         paired="--paired-end" if PAIRED_END else "",
+        # bismark_methylation_extractor handles both extraction and (via
+        # --cytosine_report) coverage/cytosine-report generation in one
+        # invocation -- there's no separate coverage2cytosine step in this
+        # workflow -- so config bismark:extract and bismark:coverage both
+        # apply here.
+        extra_extract=config["bismark"]["extract"],
+        extra_coverage=config["bismark"]["coverage"],
     log:
         "logs/methylation_extraction/{sample}.log",
     threads: 4
@@ -182,6 +195,8 @@ rule methylation_extraction:
         "--genome_folder {params.genome_abs} "
         "--multicore {threads} "
         "{input.bam} "
+        "{params.extra_extract} "
+        "{params.extra_coverage} "
         "2> {log}"
 
 

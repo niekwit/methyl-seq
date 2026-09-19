@@ -3,7 +3,7 @@ description: main configuration schema for the workflow
 properties:
   genome:
     type: string
-    enum: ["hg19", "hg38", "mm38", "mm39", "test"]
+    enum: ["hg19", "hg38", "mm38", "mm39", "dm6", "test"]
     description: "Genome assembly to use"
   ensembl_genome_build:
     type: integer
@@ -29,16 +29,16 @@ properties:
         description: "Extra arguments for Bismark methylation extraction"
       coverage:
         type: string
-        description: "Extra arguments for Bismark coverage report generation"
-      report:
-        type: string
-        description: "Extra arguments for Bismark report generation"
+        description: >-
+          Extra arguments for Bismark coverage/cytosine report generation
+          (bismark_methylation_extractor --cytosine_report, run as part of
+          the same methylation_extraction step as "extract" -- Bismark has
+          no separate coverage2cytosine invocation in this workflow)
     required:
       - align
       - deduplicate
       - extract
       - coverage
-      - report
   deeptools:
     type: object
     description: "Deeptools parameters"
