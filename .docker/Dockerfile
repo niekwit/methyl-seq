@@ -1,20 +1,8 @@
 FROM condaforge/miniforge3:latest
 LABEL io.github.snakemake.containerized="true"
-LABEL io.github.snakemake.conda_env_hash="3aaedb807a0e174d660310a5e89adbf9b789cb20fab84547f04656b0f20e6fa0"
+LABEL io.github.snakemake.conda_env_hash="b4791ea59d3ffb4ef64691206ae77a072018e5815be69bedc1782073c678eda8"
 
 # Step 2: Retrieve conda environments
-
-# Conda environment:
-#   source: https://github.com/snakemake/snakemake-wrappers/raw/v2.10.0/bio/preseq/lc_extrap/environment.yaml
-#   prefix: /conda-envs/dbf6d01858bf329ddb05cf98bd61f111
-#   channels:
-#     - conda-forge
-#     - bioconda
-#     - nodefaults
-#   dependencies:
-#     - preseq =3.2.0
-RUN mkdir -p /conda-envs/dbf6d01858bf329ddb05cf98bd61f111
-ADD https://github.com/snakemake/snakemake-wrappers/raw/v2.10.0/bio/preseq/lc_extrap/environment.yaml /conda-envs/dbf6d01858bf329ddb05cf98bd61f111/environment.yaml
 
 # Conda environment:
 #   source: https://github.com/snakemake/snakemake-wrappers/raw/v7.6.0/bio/fastqc/environment.yaml
@@ -41,31 +29,6 @@ ADD https://github.com/snakemake/snakemake-wrappers/raw/v7.6.0/bio/fastqc/enviro
 #     - snakemake-wrapper-utils =0.8.0
 RUN mkdir -p /conda-envs/d644a06128ee144c2c0f210018caa0b9
 ADD https://github.com/snakemake/snakemake-wrappers/raw/v8.1.1/bio/multiqc/environment.yaml /conda-envs/d644a06128ee144c2c0f210018caa0b9/environment.yaml
-
-# Conda environment:
-#   source: https://github.com/snakemake/snakemake-wrappers/raw/v9.0.0/bio/samtools/sort/environment.yaml
-#   prefix: /conda-envs/5e89b2a5d29ff7b7f49c8dc9669267b4
-#   channels:
-#     - conda-forge
-#     - bioconda
-#     - nodefaults
-#   dependencies:
-#     - samtools =1.23
-#     - snakemake-wrapper-utils =0.8.0
-RUN mkdir -p /conda-envs/5e89b2a5d29ff7b7f49c8dc9669267b4
-ADD https://github.com/snakemake/snakemake-wrappers/raw/v9.0.0/bio/samtools/sort/environment.yaml /conda-envs/5e89b2a5d29ff7b7f49c8dc9669267b4/environment.yaml
-
-# Conda environment:
-#   source: https://github.com/snakemake/snakemake-wrappers/raw/v9.3.0/bio/trim_galore/se/environment.yaml
-#   prefix: /conda-envs/9a44d3e05abb1b2d4bbef33d61bf314d
-#   channels:
-#     - conda-forge
-#     - bioconda
-#     - nodefaults
-#   dependencies:
-#     - trim-galore =0.6.11
-RUN mkdir -p /conda-envs/9a44d3e05abb1b2d4bbef33d61bf314d
-ADD https://github.com/snakemake/snakemake-wrappers/raw/v9.3.0/bio/trim_galore/se/environment.yaml /conda-envs/9a44d3e05abb1b2d4bbef33d61bf314d/environment.yaml
 
 # Conda environment:
 #   source: https://github.com/snakemake/snakemake-wrappers/raw/v9.4.2/bio/seqkit/environment.yaml
@@ -126,7 +89,7 @@ COPY workflow/envs/bismark.yaml /conda-envs/e254bd4b0d07081bedb140ad007ad7ca/env
 
 # Conda environment:
 #   source: workflow/envs/deeptools.yaml
-#   prefix: /conda-envs/d6dfe6c4ba9fc3e1d2289533b5e5696e
+#   prefix: /conda-envs/2bdd78eb3d93aba4429dda48c67f8f3c
 #   name: deeptools
 #   channels:
 #     - conda-forge
@@ -137,22 +100,39 @@ COPY workflow/envs/bismark.yaml /conda-envs/e254bd4b0d07081bedb140ad007ad7ca/env
 #     - python=3.12
 #     - bioconda::deeptools=3.5.6
 #     - bioconda::ucsc-bedgraphtobigwig=482
+#     - bioconda::ucsc-bigwigaverageoverbed=469
 #     - bioconda::bedtools=2.31.1
+#     - bioconda::pybedtools=0.10.0
 #     - bioconda::snakemake=8.25.5
+#     - conda-forge::pandas=2.2.3
 #     - bioconda::pyfaidx=0.9.0.3
 #     - bioconda::wiggletools=1.2.11
-RUN mkdir -p /conda-envs/d6dfe6c4ba9fc3e1d2289533b5e5696e
-COPY workflow/envs/deeptools.yaml /conda-envs/d6dfe6c4ba9fc3e1d2289533b5e5696e/environment.yaml
+RUN mkdir -p /conda-envs/2bdd78eb3d93aba4429dda48c67f8f3c
+COPY workflow/envs/deeptools.yaml /conda-envs/2bdd78eb3d93aba4429dda48c67f8f3c/environment.yaml
+
+# Conda environment:
+#   source: workflow/envs/trim_galore.yml
+#   prefix: /conda-envs/f25143b31d35300a2e0f8a6febf76392
+#   name: trim_galore
+#   channels:
+#     - conda-forge
+#     - bioconda
+#     - defaults
+#   dependencies:
+#     # Pinned to this exact build: build h9ee0642_0 was linked against a newer
+#     # glibc than older hosts (e.g. Ubuntu 20.04, glibc 2.31) provide, causing
+#     # `GLIBC_2.32/2.33/2.34 not found` errors. hf1b6044_1 fixes this (glibc <=2.16).
+#     - trim-galore=2.2.0=hf1b6044_1
+RUN mkdir -p /conda-envs/f25143b31d35300a2e0f8a6febf76392
+COPY workflow/envs/trim_galore.yml /conda-envs/f25143b31d35300a2e0f8a6febf76392/environment.yaml
 
 # Step 3: Generate conda environments
 
-RUN conda env create --prefix /conda-envs/dbf6d01858bf329ddb05cf98bd61f111 --file /conda-envs/dbf6d01858bf329ddb05cf98bd61f111/environment.yaml && \
-    conda env create --prefix /conda-envs/fc3f74ad3a4edd6540650576745e8ff5 --file /conda-envs/fc3f74ad3a4edd6540650576745e8ff5/environment.yaml && \
+RUN conda env create --prefix /conda-envs/fc3f74ad3a4edd6540650576745e8ff5 --file /conda-envs/fc3f74ad3a4edd6540650576745e8ff5/environment.yaml && \
     conda env create --prefix /conda-envs/d644a06128ee144c2c0f210018caa0b9 --file /conda-envs/d644a06128ee144c2c0f210018caa0b9/environment.yaml && \
-    conda env create --prefix /conda-envs/5e89b2a5d29ff7b7f49c8dc9669267b4 --file /conda-envs/5e89b2a5d29ff7b7f49c8dc9669267b4/environment.yaml && \
-    conda env create --prefix /conda-envs/9a44d3e05abb1b2d4bbef33d61bf314d --file /conda-envs/9a44d3e05abb1b2d4bbef33d61bf314d/environment.yaml && \
     conda env create --prefix /conda-envs/f008bd698a6714e6623cc359e3d3e6b1 --file /conda-envs/f008bd698a6714e6623cc359e3d3e6b1/environment.yaml && \
     conda env create --prefix /conda-envs/2ab973151943ea4481469dc78c1becb6 --file /conda-envs/2ab973151943ea4481469dc78c1becb6/environment.yaml && \
     conda env create --prefix /conda-envs/e254bd4b0d07081bedb140ad007ad7ca --file /conda-envs/e254bd4b0d07081bedb140ad007ad7ca/environment.yaml && \
-    conda env create --prefix /conda-envs/d6dfe6c4ba9fc3e1d2289533b5e5696e --file /conda-envs/d6dfe6c4ba9fc3e1d2289533b5e5696e/environment.yaml && \
+    conda env create --prefix /conda-envs/2bdd78eb3d93aba4429dda48c67f8f3c --file /conda-envs/2bdd78eb3d93aba4429dda48c67f8f3c/environment.yaml && \
+    conda env create --prefix /conda-envs/f25143b31d35300a2e0f8a6febf76392 --file /conda-envs/f25143b31d35300a2e0f8a6febf76392/environment.yaml && \
     conda clean --all -y
