@@ -21,7 +21,6 @@ CSV = pd.read_csv("config/samples.csv")
 validate(CSV, schema="schemas/samples.schema.yaml")
 CONDITIONS = conditions(CSV)
 REGIONS = regions()
-# META_REGIONS = meta_regions()
 validate_reference_condition(config["DMR"]["reference_condition"], CONDITIONS)
 TE_REGIONS = te_regions()
 validate_te_config(TE_REGIONS, REGIONS, resources)
@@ -52,9 +51,6 @@ include: "rules/process_methylation_calls.smk"
 include: "rules/boxplot.smk"
 include: "rules/te_utr.smk"
 include: "rules/dmrs.smk"
-
-
-# include: "rules/metaplot.smk"
 
 
 # -----------------------------------------------------

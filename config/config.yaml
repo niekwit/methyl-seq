@@ -42,15 +42,6 @@ boxplot:
   # regions:
   #   my_custom_region: "config/annotations/my_custom_region.bed"
 
-# Metaplot parameters
-# Average % CpG methylation across genomic regions
-metaplot:
-  plot: True
-  extend: 2000 # extend regions by this many bases on each side
-  regions:
-    # Genomic regions in BED format to plot metaplots for
-    L1Md.T: bed/L1Md.T.bed
-
 DMR:
   # methylKit settings for DMR calling
   run: True

@@ -307,12 +307,3 @@ def validate_te_utr_config(te_utr_class_blocks):
                 f"(got: {got}) -- LINE1 is the only TE "
                 "with the ORF1/ORF2 UTR architecture this analysis relies on."
             )
-
-
-def meta_regions():
-    regions = config["metaplot"].get("regions", None)
-    # Get keys of regions dict
-    if regions:
-        return list(regions.keys())
-    else:
-        raise ValueError("No regions defined in config file under metaplot:regions")
