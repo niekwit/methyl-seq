@@ -1,5 +1,5 @@
-# Paternally imprinted region (ICR) methylation heatmap. mm39 only for now
-# (resources.icr_regions is None for every other genome -- see
+# Paternally imprinted region (ICR) methylation heatmap. mm39 and hg38 for
+# now (resources.icr_regions is None for every other genome -- see
 # resources.py) -- the "test" genome gets a single-region (Rasgrf1 only)
 # subset so this code path is exercised in CI.
 if resources.icr_regions:

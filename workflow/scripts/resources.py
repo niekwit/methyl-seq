@@ -15,6 +15,21 @@ _ICR_REGIONS_MM39 = os.path.normpath(
     )
 )
 
+# Same idea for hg38 -- the 25 canonical human ICRs (Skaar et al. 2012, ILAR
+# J, PMID 23744971), with hg38 coordinates and gene-symbol annotation from
+# humanicr.org (Sanchez-Delgado et al. 2022, Epigenetics, PMID 35786392) via
+# UCSC's REST API. Regenerate with workflow/scripts/get_icr_regions_hg38.py;
+# see workflow/resources/icr_regions_hg38.references.tsv for full per-region
+# citations.
+_ICR_REGIONS_HG38 = os.path.normpath(
+    os.path.join(
+        os.path.dirname(os.path.abspath(__file__)),
+        "..",
+        "resources",
+        "icr_regions_hg38.bed",
+    )
+)
+
 
 class Resources:
     """Gets URLs and file names of fasta and GTF files for a given genome and build"""
@@ -26,12 +41,13 @@ class Resources:
         self.genome = genome
         self.build = build
 
-        # Paternally-imprinted-region (ICR) heatmap: mm39 only for now (a
-        # fixed, hand-curated set of 4 ICRs -- see
-        # workflow/resources/icr_regions_mm39.bed), plus a single-region
-        # (Rasgrf1 only) subset for the "test" genome in its own shifted
-        # mini-genome coordinates, so this code path is exercised in CI.
-        # None (feature off) for every other genome; set below.
+        # Paternally-imprinted-region (ICR) heatmap: mm39 (4 hand-curated
+        # ICRs, see workflow/resources/icr_regions_mm39.bed) and hg38 (25
+        # canonical ICRs, see workflow/resources/icr_regions_hg38.bed and
+        # its .references.tsv) for now, plus a single-region (Rasgrf1 only)
+        # subset for the "test" genome in its own shifted mini-genome
+        # coordinates, so this code path is exercised in CI. None (feature
+        # off) for every other genome; set below.
         self.icr_regions_url = None
         self.icr_regions = None
 
@@ -54,6 +70,9 @@ class Resources:
             self.regulatory_gtf_url = f"{base_url_ens}regulation/homo_sapiens/{name}/annotation/Homo_sapiens.{name}.regulatory_features.v{build}.gff3.gz"
             self.cpg_islands_url = f"https://hgdownload.soe.ucsc.edu/goldenPath/{ucsc_build}/database/cpgIslandExt.txt.gz"
             self.repeat_mask_url = f"https://hgdownload.soe.ucsc.edu/goldenPath/{ucsc_build}/database/rmsk.txt.gz"
+            if genome == "hg38":
+                # Static, already-checked-in file -- no download rule needed
+                self.icr_regions = _ICR_REGIONS_HG38
 
         elif "mm" in genome:
             if genome == "mm38":
