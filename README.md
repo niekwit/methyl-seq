@@ -252,7 +252,8 @@ This starts from `resources/filtered_cpg_probes.bed` and `results/bed/CpG_merged
 ```
 results/
 ├── multiqc/
-│   └── multiqc_report.html          # Trimming, alignment, and QC summary
+│   ├── multiqc_report.html          # FastQC summary across all samples
+│   └── multiqc_bismark.html         # Bismark alignment/dedup/methylation-extraction/nucleotide-coverage summary across all samples
 ├── bigwig/
 │   ├── {condition}.bw               # Average CpG methylation BigWig per condition
 │   └── coverage/

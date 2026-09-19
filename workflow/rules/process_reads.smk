@@ -230,8 +230,26 @@ rule nucleotide_coverage:
 
 rule multiqc_bismark:
     input:
-        expand(
+        # The v8.1.1/bio/multiqc wrapper scans each input file's *parent
+        # directory* for anything MultiQC recognizes (not just the listed
+        # files themselves), so these don't need to be every single report
+        # multiqc's bismark module parses -- but nucleotide_stats.txt alone
+        # isn't enough to correctly order the DAG: nucleotide_coverage
+        # (bam2nuc) and methylation_extraction are independent siblings of
+        # each other (both only depend on the deduplicated BAM), so without
+        # also depending on methylation_extraction's own outputs, multiqc
+        # could run while that sibling job is still writing the splitting
+        # report/M-bias files it needs.
+        nuc=expand(
             "results/bismark/{sample}/{sample}.deduplicated.nucleotide_stats.txt",
+            sample=SAMPLES,
+        ),
+        sreport=expand(
+            "results/bismark/{sample}/{sample}.deduplicated_splitting_report.txt",
+            sample=SAMPLES,
+        ),
+        mbias=expand(
+            "results/bismark/{sample}/{sample}.deduplicated.M-bias.txt",
             sample=SAMPLES,
         ),
     output:
@@ -243,21 +261,3 @@ rule multiqc_bismark:
         runtime=30,
     wrapper:
         "v8.1.1/bio/multiqc"
-
-
-"""
-rule summary_report:
-    input:
-        expand("results/bismark/{sample}/{sample}.bam", sample=SAMPLES),
-    output:
-        "results/bismark/report.html",
-    log:
-        "logs/bismark/summary_report.log"
-    threads: 2
-    resources:
-        runtime=30,
-    conda:
-        "../envs/bismark.yaml"
-    shell:
-        "bismark2summary -o {output} {input}"
-"""

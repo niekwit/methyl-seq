@@ -32,7 +32,7 @@ wildcard_constraints:
 def targets():
     targets = [
         "results/plots/PCA.pdf",
-        # "results/multiqc/multiqc_bismark.html",
+        "results/multiqc/multiqc_bismark.html",
         expand("results/bigwig/{condition}.bw", condition=CONDITIONS),
         expand("results/bigwig/coverage/{condition}.bw", condition=CONDITIONS),
         "results/plots/methylation_conversion_rate.csv",
