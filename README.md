@@ -63,10 +63,12 @@ KO_1,KO
 KO_2,KO
 ```
 
+Most final outputs (bigwig tracks, boxplots, the ICR heatmap) are per-`condition`, not per-`sample`: replicate samples sharing a condition are averaged/merged together (e.g. `results/bigwig/{condition}.bw`). Per-sample outputs (alignment, deduplication, coverage) still exist under `results/bismark/{sample}/` for inspection, but condition is the unit most downstream analyses report at.
+
 ### 4. Configure `config/config.yaml`
 
 ```yaml
-genome: hg38 # hg19 | hg38 | mm38 | mm39
+genome: hg38 # hg19 | hg38 | mm38 | mm39 | dm6
 ensembl_genome_build: 114 # Ensembl release number
 temp_dir: /tmp # use "/local/" on Cambridge HPC
 
@@ -75,10 +77,9 @@ trim_galore_args: "--clip_R1 10 --clip_R2 10 --three_prime_clip_R1 10 --three_pr
 
 bismark:
   align: "" # extra arguments for bismark alignment
-  deduplicate: ""
-  extract: ""
-  coverage: ""
-  report: ""
+  deduplicate: "" # extra arguments for deduplicate_bismark
+  extract: "" # extra arguments for bismark_methylation_extractor
+  coverage: "" # extra arguments for the same command's --cytosine_report step
 
 deeptools:
   bigwig_summary:
@@ -128,6 +129,16 @@ DMR:
   difference_threshold: 25
   qvalue_threshold: 0.01
 ```
+
+`temp_dir` is where Trim Galore and other tools write scratch files — point it at fast local/scratch storage on a cluster rather than a shared home directory. `trim_galore_args` should be adjusted for your library prep: the default hard-clips 10 bp from both ends of both mates, appropriate for EM-seq's end-repair bias; WGBS libraries may need different values. Each `bismark:` value is appended as extra command-line arguments to the corresponding step (`align` → `bismark`, `deduplicate` → `deduplicate_bismark`, `extract`/`coverage` → `bismark_methylation_extractor`, which handles both extraction and coverage/cytosine-report generation in one invocation — leave a value empty to use Bismark's own defaults).
+
+#### QC: PCA and sample clustering
+
+`deeptools:bigwig_summary` and `deeptools:plotPCA` control `multiBigwigSummary` and `plotPCA` (both from [deepTools](https://deeptools.readthedocs.io/)), run on the per-condition methylation bigwigs to check how similar/distinct your conditions are. `bigwig_summary:binSize` sets the genomic bin size for summarizing signal (smaller = finer-grained but slower); `extra` on either passes additional arguments straight through to the respective deepTools command. Produces `results/deeptools/PCA.tab` (the underlying values) and `results/plots/PCA.pdf`/`scree.pdf`.
+
+#### DMR analysis
+
+Optional (`DMR:run: True`); uses [methylKit](https://bioconductor.org/packages/methylKit/) to tile the genome into `tile_size`-bp windows (stepping by `step_size`, so overlapping tiles are possible if `step_size < tile_size`), keep only tiles with at least `min_per_group` samples covered in both groups, and test each tile for a methylation difference between `reference_condition`'s samples and every other sample pooled together as the comparison group (a single binary comparison, not one comparison per non-reference condition — relevant if `samples.csv` has more than two conditions). A tile is called a significant DMR if its absolute methylation difference exceeds `difference_threshold` (percentage points) and its q-value is below `qvalue_threshold`. Produces `hypermethylated_DMRs.bed`/`hypomethylated_DMRs.bed` (and `..._annotated.tab`, with nearest-gene/genomic-feature annotation via ChIPseeker) under `results/dmrs/`, plus `DMR_volcano.pdf`, `DMR_genomic_distribution.pdf`, and `DMR_distance_to_TSS.pdf` under `results/plots/dmrs/`.
 
 #### Boxplot regions
 
@@ -189,6 +200,23 @@ boxplot:
 
 This produces a separate `results/plots/te_5utr_boxplots.pdf`, faceted by TE (the family total, then its configured subfamilies) x region (5' UTR / L1 remainder) — each L1 element's UTR/remainder span is its own boxplot data point (not split into the CpG-probe-sized chunks the other boxplots use).
 
+#### Paternally imprinted region (ICR) heatmap
+
+For `mm39` and `hg38`, a heatmap of average %CpG methylation across paternally imprinted control regions (ICRs) is generated automatically — no config needed. It's produced from `results/bigwig/{condition}.bw` via `bigWigAverageOverBed`, so it needs no extra alignment or extraction step beyond what the rest of the workflow already does.
+
+- `mm39`: 4 hand-picked ICRs (`Gpr1-Zdbf2`, `Gtl2/Dlk1`, `H19/Igf2`, `Rasgrf1`) in `workflow/resources/icr_regions_mm39.bed`.
+- `hg38`: the 25 canonical human ICRs first enumerated by [Skaar et al. 2012](https://pubmed.ncbi.nlm.nih.gov/23744971/), with hg38 coordinates and gene-symbol annotation from the [humanicr.org](https://humanicr.org/) database ([Sanchez-Delgado et al. 2022](https://pubmed.ncbi.nlm.nih.gov/35786392/)), in `workflow/resources/icr_regions_hg38.bed` — full per-region citations in the companion `icr_regions_hg38.references.tsv`. Regenerate either file with:
+  ```bash
+  python workflow/scripts/get_icr_regions_hg38.py \
+      --out workflow/resources/icr_regions_hg38.bed \
+      --refs-out workflow/resources/icr_regions_hg38.references.tsv
+  ```
+  (a standalone utility, not part of the Snakemake DAG, since it queries humanicr.org and UCSC's REST API live).
+
+Every other genome (`hg19`, `mm38`, `dm6`, `test`) has no ICR heatmap — `test` gets a single-region (`Rasgrf1`-only) subset in its own shifted mini-genome coordinates purely so this code path is exercised in CI.
+
+This produces `results/plots/icr_heatmap.pdf` and `icr_heatmap_data.csv`.
+
 ### 5. Run the workflow
 
 ```bash
@@ -237,8 +265,13 @@ results/
 │   ├── methylation_conversion_rate.pdf
 │   ├── methylation_conversion_rate.csv
 │   ├── boxplots.pdf                 # CpG methylation boxplots (if boxplot.plot: True)
+│   ├── boxplots_data.csv
 │   ├── te_boxplots.pdf              # TE class/family/subfamily boxplots (if any boxplot TE class block is configured)
-│   └── te_5utr_boxplots.pdf         # LINE1 5' UTR vs. remainder boxplots (if any boxplot TE class block configures utr_analysis)
+│   ├── te_boxplots_data.csv
+│   ├── te_5utr_boxplots.pdf         # LINE1 5' UTR vs. remainder boxplots (if any boxplot TE class block configures utr_analysis)
+│   ├── te_5utr_boxplots_data.csv
+│   ├── icr_heatmap.pdf              # ICR methylation heatmap (mm39/hg38 only)
+│   └── icr_heatmap_data.csv
 └── dmrs/                            # Only produced if DMR.run: True
     ├── hypermethylated_DMRs.bed
     ├── hypomethylated_DMRs.bed
@@ -254,6 +287,18 @@ results/
 ```
 
 ---
+
+## Testing
+
+CI (`.github/workflows/main.yaml`) runs on every push/PR to `main`: formatting (`snakefmt`, via super-linter), `snakemake --lint`, and a full pipeline run against the small, checked-in `.test/` fixture dataset (a real, subsetted mm39 EM-seq dataset with all annotation tracks carved to match — see `.test/make_test_data.py`). To reproduce any of these locally:
+
+```bash
+# Lint the workflow
+snakemake --directory .test --snakefile workflow/Snakefile --lint
+
+# Run the full pipeline against the test fixtures
+snakemake --directory .test --snakefile workflow/Snakefile --use-conda -c <threads>
+```
 
 ## Authors
 
