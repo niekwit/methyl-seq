@@ -5,4 +5,11 @@ channels:
   - nodefaults
 dependencies:
   - pigz=2.8
+  # index_fasta (resources.smk) uses samtools directly -- the Perl bismark
+  # package (0.25.1) pulled it in as its own dependency, but the Rust
+  # rewrite (3.1.0) doesn't depend on samtools at all (its own
+  # dependencies are bowtie2/hisat2/minimap2/libgcc), so it now needs to
+  # be listed explicitly. Pinned to the version the old Perl package
+  # pulled in, for reproducibility.
+  - bioconda::samtools=1.24
   - bioconda:bismark=3.1.0

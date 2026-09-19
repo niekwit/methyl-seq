@@ -1,6 +1,6 @@
 FROM condaforge/miniforge3:latest
 LABEL io.github.snakemake.containerized="true"
-LABEL io.github.snakemake.conda_env_hash="faaf398b7874c2f138bd010f28df01709a2c7798eb3f461a05afb2107584651a"
+LABEL io.github.snakemake.conda_env_hash="b7c0a78e06fa941a6f451cae7e9b004875e7238d07cdd0a620b1877503e6e8bf"
 
 # Step 2: Retrieve conda environments
 
@@ -75,7 +75,7 @@ COPY workflow/envs/R.yaml /conda-envs/2ab973151943ea4481469dc78c1becb6/environme
 
 # Conda environment:
 #   source: workflow/envs/bismark.yaml
-#   prefix: /conda-envs/4f8aeead075fd4b7d6fcd7fde18e8d05
+#   prefix: /conda-envs/1118a0e1330ad611769d983470e374d9
 #   name: bismark
 #   channels:
 #     - conda-forge
@@ -83,9 +83,16 @@ COPY workflow/envs/R.yaml /conda-envs/2ab973151943ea4481469dc78c1becb6/environme
 #     - nodefaults
 #   dependencies:
 #     - pigz=2.8
+#     # index_fasta (resources.smk) uses samtools directly -- the Perl bismark
+#     # package (0.25.1) pulled it in as its own dependency, but the Rust
+#     # rewrite (3.1.0) doesn't depend on samtools at all (its own
+#     # dependencies are bowtie2/hisat2/minimap2/libgcc), so it now needs to
+#     # be listed explicitly. Pinned to the version the old Perl package
+#     # pulled in, for reproducibility.
+#     - bioconda::samtools=1.24
 #     - bioconda:bismark=3.1.0
-RUN mkdir -p /conda-envs/4f8aeead075fd4b7d6fcd7fde18e8d05
-COPY workflow/envs/bismark.yaml /conda-envs/4f8aeead075fd4b7d6fcd7fde18e8d05/environment.yaml
+RUN mkdir -p /conda-envs/1118a0e1330ad611769d983470e374d9
+COPY workflow/envs/bismark.yaml /conda-envs/1118a0e1330ad611769d983470e374d9/environment.yaml
 
 # Conda environment:
 #   source: workflow/envs/deeptools.yaml
@@ -132,7 +139,7 @@ RUN conda env create --prefix /conda-envs/fc3f74ad3a4edd6540650576745e8ff5 --fil
     conda env create --prefix /conda-envs/d644a06128ee144c2c0f210018caa0b9 --file /conda-envs/d644a06128ee144c2c0f210018caa0b9/environment.yaml && \
     conda env create --prefix /conda-envs/f008bd698a6714e6623cc359e3d3e6b1 --file /conda-envs/f008bd698a6714e6623cc359e3d3e6b1/environment.yaml && \
     conda env create --prefix /conda-envs/2ab973151943ea4481469dc78c1becb6 --file /conda-envs/2ab973151943ea4481469dc78c1becb6/environment.yaml && \
-    conda env create --prefix /conda-envs/4f8aeead075fd4b7d6fcd7fde18e8d05 --file /conda-envs/4f8aeead075fd4b7d6fcd7fde18e8d05/environment.yaml && \
+    conda env create --prefix /conda-envs/1118a0e1330ad611769d983470e374d9 --file /conda-envs/1118a0e1330ad611769d983470e374d9/environment.yaml && \
     conda env create --prefix /conda-envs/2bdd78eb3d93aba4429dda48c67f8f3c --file /conda-envs/2bdd78eb3d93aba4429dda48c67f8f3c/environment.yaml && \
     conda env create --prefix /conda-envs/f25143b31d35300a2e0f8a6febf76392 --file /conda-envs/f25143b31d35300a2e0f8a6febf76392/environment.yaml && \
     conda clean --all -y
