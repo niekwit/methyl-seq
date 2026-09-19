@@ -5,4 +5,4 @@ channels:
   - nodefaults
 dependencies:
   - pigz=2.8
-  - bioconda:bismark=0.25.1
+  - bioconda:bismark=3.1.0

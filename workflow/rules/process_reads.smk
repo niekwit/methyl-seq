@@ -187,7 +187,7 @@ rule methylation_extraction:
         "{params.paired} "
         "--no_overlap "
         "--output_dir {params.outdir} "
-        "--bedgraph "
+        "--bedGraph "
         "--cytosine_report "
         "--gzip "
         "--no_header "

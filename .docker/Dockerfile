@@ -1,6 +1,6 @@
 FROM condaforge/miniforge3:latest
 LABEL io.github.snakemake.containerized="true"
-LABEL io.github.snakemake.conda_env_hash="b4791ea59d3ffb4ef64691206ae77a072018e5815be69bedc1782073c678eda8"
+LABEL io.github.snakemake.conda_env_hash="faaf398b7874c2f138bd010f28df01709a2c7798eb3f461a05afb2107584651a"
 
 # Step 2: Retrieve conda environments
 
@@ -75,7 +75,7 @@ COPY workflow/envs/R.yaml /conda-envs/2ab973151943ea4481469dc78c1becb6/environme
 
 # Conda environment:
 #   source: workflow/envs/bismark.yaml
-#   prefix: /conda-envs/e254bd4b0d07081bedb140ad007ad7ca
+#   prefix: /conda-envs/4f8aeead075fd4b7d6fcd7fde18e8d05
 #   name: bismark
 #   channels:
 #     - conda-forge
@@ -83,9 +83,9 @@ COPY workflow/envs/R.yaml /conda-envs/2ab973151943ea4481469dc78c1becb6/environme
 #     - nodefaults
 #   dependencies:
 #     - pigz=2.8
-#     - bioconda:bismark=0.25.1
-RUN mkdir -p /conda-envs/e254bd4b0d07081bedb140ad007ad7ca
-COPY workflow/envs/bismark.yaml /conda-envs/e254bd4b0d07081bedb140ad007ad7ca/environment.yaml
+#     - bioconda:bismark=3.1.0
+RUN mkdir -p /conda-envs/4f8aeead075fd4b7d6fcd7fde18e8d05
+COPY workflow/envs/bismark.yaml /conda-envs/4f8aeead075fd4b7d6fcd7fde18e8d05/environment.yaml
 
 # Conda environment:
 #   source: workflow/envs/deeptools.yaml
@@ -132,7 +132,7 @@ RUN conda env create --prefix /conda-envs/fc3f74ad3a4edd6540650576745e8ff5 --fil
     conda env create --prefix /conda-envs/d644a06128ee144c2c0f210018caa0b9 --file /conda-envs/d644a06128ee144c2c0f210018caa0b9/environment.yaml && \
     conda env create --prefix /conda-envs/f008bd698a6714e6623cc359e3d3e6b1 --file /conda-envs/f008bd698a6714e6623cc359e3d3e6b1/environment.yaml && \
     conda env create --prefix /conda-envs/2ab973151943ea4481469dc78c1becb6 --file /conda-envs/2ab973151943ea4481469dc78c1becb6/environment.yaml && \
-    conda env create --prefix /conda-envs/e254bd4b0d07081bedb140ad007ad7ca --file /conda-envs/e254bd4b0d07081bedb140ad007ad7ca/environment.yaml && \
+    conda env create --prefix /conda-envs/4f8aeead075fd4b7d6fcd7fde18e8d05 --file /conda-envs/4f8aeead075fd4b7d6fcd7fde18e8d05/environment.yaml && \
     conda env create --prefix /conda-envs/2bdd78eb3d93aba4429dda48c67f8f3c --file /conda-envs/2bdd78eb3d93aba4429dda48c67f8f3c/environment.yaml && \
     conda env create --prefix /conda-envs/f25143b31d35300a2e0f8a6febf76392 --file /conda-envs/f25143b31d35300a2e0f8a6febf76392/environment.yaml && \
     conda clean --all -y
