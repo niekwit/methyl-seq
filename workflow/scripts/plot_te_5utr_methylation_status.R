@@ -177,11 +177,22 @@ for (i in seq_along(te_names)) {
 
   cutoff <- cutoffs[[te]]
 
-  # One row per element, one column per condition's mean 5' UTR methylation
+  # One row per element, one column per condition's mean 5' UTR methylation.
+  # pivot_wider() only creates a column for a condition that actually has
+  # at least one row for this TE -- with a small/divergent locus (e.g. the
+  # .test/ genome) a TE can have zero confidently-annotated elements for
+  # some condition, or none at all, leaving reference_condition/ko missing
+  # entirely rather than merely all-NA; add them back as all-NA so the
+  # !is.na() filters below always have a column to look at.
   wide <- data %>%
     filter(TE == te) %>%
     select(base_id, condition, mean) %>%
     pivot_wider(names_from = condition, values_from = mean)
+  for (needed_col in c(reference_condition, ko_conditions)) {
+    if (!needed_col %in% names(wide)) {
+      wide[[needed_col]] <- NA_real_
+    }
+  }
 
   for (ko in ko_conditions) {
     status <- wide %>%
