@@ -48,6 +48,7 @@ def targets():
 
     if te_utr_names():
         targets.append("results/plots/te_5utr_boxplots.pdf")
+        targets.append("results/plots/te_5utr_methylation_histogram.pdf")
 
     if resources.icr_regions:
         targets.append("results/plots/icr_heatmap.pdf")
@@ -288,6 +289,23 @@ def te_utr_names():
         names.append(te_family_list(block)[0])
         names.extend(block.get("subfamilies", []))
     return names
+
+
+def te_utr_cutoffs():
+    """
+    {te_name: methylation_cutoff} across all te_utr_class_blocks() -- each
+    TE name (family total + configured subfamilies) inherits its class
+    block's utr_analysis:methylation_cutoff, default 50 (%) when unset.
+    Used to classify each element's 5' UTR as low/high methylation in
+    plot_line1_5utr_methylation_status (te_utr.smk).
+    """
+    cutoffs = {}
+    for _, block in te_utr_class_blocks():
+        cutoff = block["utr_analysis"].get("methylation_cutoff", 50)
+        te_names = [te_family_list(block)[0]] + list(block.get("subfamilies", []))
+        for name in te_names:
+            cutoffs[name] = cutoff
+    return cutoffs
 
 
 def validate_te_utr_config(te_utr_class_blocks):

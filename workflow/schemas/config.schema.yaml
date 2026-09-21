@@ -158,6 +158,17 @@ properties:
               description: >-
                 Also annotate elements where only one of ORF1/ORF2 is
                 confidently located, default false
+            methylation_cutoff:
+              type: number
+              minimum: 0
+              maximum: 100
+              description: >-
+                %CpG methylation cutoff (mean over each element's 5' UTR,
+                per condition) used to classify elements as "low" or
+                "high" methylation: mean >= cutoff -> high. Produces
+                results/plots/te_5utr_methylation_histogram.pdf and
+                per-TE, per-condition low/high BED files under
+                results/te_5utr_status/. Default 50.
           required:
             - genbank
           additionalProperties: false

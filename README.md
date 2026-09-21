@@ -194,11 +194,20 @@ boxplot:
       min_coverage: 0.5    # optional, default 0.5
       min_mapq: 20          # optional, default 20
       single_orf: false     # optional, default false
+      methylation_cutoff: 50 # optional, default 50
 ```
 
 `genbank` must be a GenBank record for a consensus L1 with `CDS` features whose `/product` qualifiers are exactly `ORF1` and `ORF2` (e.g. mouse [M13002](https://www.ncbi.nlm.nih.gov/nuccore/M13002), human [AF148856](https://www.ncbi.nlm.nih.gov/nuccore/AF148856)). For each near-full-length L1 element (the configured `family`'s own filtered set), ORF1/ORF2 are located on that element's own sequence via minimap2; `min_identity`/`min_coverage` control how confident a hit must be, and `min_mapq` its minimum mapping quality. By default an element needs both ORFs confidently located to be annotated; `single_orf: true` also keeps elements where only one was found (the "UTR" on the missing ORF's side then also contains that ORF and the inter-ORF sequence).
 
 This produces a separate `results/plots/te_5utr_boxplots.pdf`, faceted by TE (the family total, then its configured subfamilies) x region (5' UTR / L1 remainder) — each L1 element's UTR/remainder span is its own boxplot data point (not split into the CpG-probe-sized chunks the other boxplots use).
+
+`utr_analysis` also drives a second, independent classification: for each element, the mean %CpG methylation over just its 5' UTR is taken from the per-condition averaged bigwig (`results/bigwig/{condition}.bw`, via `bigWigAverageOverBed`), plotted as a histogram per TE (one curve per condition, with `methylation_cutoff` drawn as a dashed reference line) in `results/plots/te_5utr_methylation_histogram.pdf`/`..._data.csv`. Elements are then classified against `DMR:reference_condition` (the same reference used for DMR calling): for every other ("KO") condition in `samples.csv`, each element is compared reference-vs-that-condition —
+
+- **active**: reference ≥ `methylation_cutoff` and KO < `methylation_cutoff` (methylation lost upon KO)
+- **inactive**: reference ≥ `methylation_cutoff` and KO ≥ `methylation_cutoff` (stays methylated)
+- elements with reference < `methylation_cutoff` are excluded from both (never started out methylated)
+
+producing one active/inactive BED file pair per TE per non-reference condition — `results/te_5utr_status/{te_name}_{condition}_active.bed` and `..._inactive.bed` — each listing the affected elements' full genomic span (5' UTR + remainder combined). With more than one non-reference condition (e.g. multiple KO lines), this comparison is repeated independently for each one against the same reference.
 
 #### Paternally imprinted region (ICR) heatmap
 
@@ -271,8 +280,13 @@ results/
 │   ├── te_boxplots_data.csv
 │   ├── te_5utr_boxplots.pdf         # LINE1 5' UTR vs. remainder boxplots (if any boxplot TE class block configures utr_analysis)
 │   ├── te_5utr_boxplots_data.csv
+│   ├── te_5utr_methylation_histogram.pdf   # LINE1 5' UTR methylation histograms (same utr_analysis condition)
+│   ├── te_5utr_methylation_histogram_data.csv
 │   ├── icr_heatmap.pdf              # ICR methylation heatmap (mm39/hg38 only)
 │   └── icr_heatmap_data.csv
+├── te_5utr_status/                  # Only produced if any boxplot TE class block configures utr_analysis
+│   ├── {te_name}_{ko_condition}_active.bed    # Elements methylated in reference_condition, lost upon {ko_condition}
+│   └── {te_name}_{ko_condition}_inactive.bed  # Elements methylated in reference_condition, stay methylated in {ko_condition}
 └── dmrs/                            # Only produced if DMR.run: True
     ├── hypermethylated_DMRs.bed
     ├── hypomethylated_DMRs.bed

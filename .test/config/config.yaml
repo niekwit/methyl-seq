@@ -39,6 +39,7 @@ boxplot:
       - L1MdTf
     utr_analysis:
       genbank: resources/L1_consensus_mm.gb
+      methylation_cutoff: 50
   LTR:
     min_length: 100
 

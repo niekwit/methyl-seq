@@ -26,6 +26,10 @@ TE_REGIONS = te_regions()
 validate_te_config(TE_REGIONS, REGIONS, resources)
 UTR_TE_NAMES = te_utr_names()
 validate_te_utr_config(te_utr_class_blocks())
+UTR_TE_CUTOFFS = te_utr_cutoffs()
+UTR_TE_KO_CONDITIONS = [
+    c for c in CONDITIONS if c != config["DMR"]["reference_condition"]
+]
 
 
 # Condition and region names can themselves contain underscores (e.g. a

@@ -150,3 +150,93 @@ if _UTR_CLASS_BLOCKS:
             "../envs/R.yaml"
         script:
             "../scripts/plot_te_5utr_boxplot.R"
+
+    # 5' UTR methylation-status classification: mean %CpG methylation over
+    # just each element's 5' UTR span, per condition, taken from the
+    # per-condition averaged bigwig (results/bigwig/{condition}.bw -- see
+    # average_bedgraph_to_bigwig in bigwig.smk) -- mirrors icr_scores in
+    # icr.smk, restricted to the "_5UTR" rows of each TE's own
+    # bed/{te_name}_5UTR_remainder.bed ("_remainder" rows are irrelevant
+    # to this classification).
+    rule line1_5utr_bigwig_average:
+        input:
+            bed="bed/{te_name}_5UTR_remainder.bed",
+            bw="results/bigwig/{condition}.bw",
+        output:
+            temp("results/te_5utr_status/{te_name}_{condition}_avg.txt"),
+        wildcard_constraints:
+            te_name="|".join(re.escape(t) for t in UTR_TE_NAMES),
+        log:
+            "logs/te_5utr_status/{te_name}_{condition}_avg.log",
+        threads: 1
+        resources:
+            runtime=15,
+            mem_mb=2000,
+        conda:
+            "../envs/deeptools.yaml"
+        shell:
+            # bigWigAverageOverBed doesn't accept the trailing score/strand
+            # columns (score="." isn't a valid integer to it) -- cut down to
+            # plain chrom/start/end/name first, as the reference script did.
+            r"awk '$4 ~ /_5UTR$/' {input.bed} | "
+            "cut -f1-4 | "
+            "bigWigAverageOverBed {input.bw} /dev/stdin /dev/stdout 2> {log} | "
+            r"sed 's/$/\t{wildcards.te_name}\t{wildcards.condition}/' > {output}"
+
+    rule combine_line1_5utr_bigwig_average:
+        input:
+            expand(
+                "results/te_5utr_status/{te_name}_{condition}_avg.txt",
+                te_name=UTR_TE_NAMES,
+                condition=CONDITIONS,
+            ),
+        output:
+            "results/te_5utr_status/all_conditions_5utr_avg.txt",
+        log:
+            "logs/te_5utr_status/combine_5utr_avg.log",
+        threads: 1
+        resources:
+            runtime=10,
+            mem_mb=2000,
+        conda:
+            "../envs/deeptools.yaml"
+        shell:
+            "cat {input} > {output} 2> {log}"
+
+    rule plot_line1_5utr_methylation_status:
+        input:
+            avg="results/te_5utr_status/all_conditions_5utr_avg.txt",
+            beds=expand("bed/{te_name}_5UTR_remainder.bed", te_name=UTR_TE_NAMES),
+        output:
+            pdf="results/plots/te_5utr_methylation_histogram.pdf",
+            csv="results/plots/te_5utr_methylation_histogram_data.csv",
+            # Cross-condition classification, one comparison per non-reference
+            # ("KO") condition against the single config DMR:reference_condition
+            # ("REF"): active = REF >= cutoff & KO < cutoff (lost methylation
+            # upon KO), inactive = REF >= cutoff & KO >= cutoff (stays
+            # methylated); elements with REF < cutoff are excluded from both.
+            active=expand(
+                "results/te_5utr_status/{te_name}_{ko_condition}_active.bed",
+                te_name=UTR_TE_NAMES,
+                ko_condition=UTR_TE_KO_CONDITIONS,
+            ),
+            inactive=expand(
+                "results/te_5utr_status/{te_name}_{ko_condition}_inactive.bed",
+                te_name=UTR_TE_NAMES,
+                ko_condition=UTR_TE_KO_CONDITIONS,
+            ),
+        params:
+            te_names=UTR_TE_NAMES,
+            reference_condition=config["DMR"]["reference_condition"],
+            ko_conditions=UTR_TE_KO_CONDITIONS,
+            cutoffs=[UTR_TE_CUTOFFS[t] for t in UTR_TE_NAMES],
+        log:
+            "logs/te_5utr_status/plot_methylation_status.log",
+        threads: 1
+        resources:
+            runtime=30,
+            mem_mb=2000,
+        conda:
+            "../envs/R.yaml"
+        script:
+            "../scripts/plot_te_5utr_methylation_status.R"
