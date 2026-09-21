@@ -67,24 +67,43 @@ if (nrow(data) == 0) {
   quit(save = "no", status = 0)
 }
 
-# Condition order from config/samples.csv, matching plot_te_5utr_boxplot.R
+# Condition order: reference_condition first (coloured grey, like the
+# "Control" side of the comparison) followed by every other condition in
+# config/samples.csv order -- mirrors the fixed 2-colour assumption
+# plot_te_5utr_boxplot.R already makes for a 2-condition design; a 3rd+
+# condition still plots, just without its own colour (falls back to
+# ggplot's NA grey with a harmless warning).
 sample_info <- read.csv("config/samples.csv", header = TRUE)
-condition_levels <- unique(sample_info$condition)
+condition_levels <- c(
+  reference_condition,
+  setdiff(unique(sample_info$condition), reference_condition)
+)
 data$condition <- factor(data$condition, levels = condition_levels)
 data$TE <- factor(data$TE, levels = te_names)
 
 # Histogram of mean 5' UTR methylation per element, one facet per TE,
 # coloured by condition (reference + every KO condition), with each TE's
-# configured cutoff drawn as a reference line
+# configured cutoff drawn as a dashed reference line and a "Low"/"High"
+# arrow annotation either side of it
 cutoff_df <- data.frame(
   TE = factor(te_names, levels = te_names),
   cutoff = unname(cutoffs[te_names])
 )
 
+# Percentage-point offsets from the cutoff for the "Low"/"High" arrow
+# annotation -- fixed since mean 5' UTR methylation is always a 0-100 %
+# axis regardless of TE/facet. Plain ASCII arrows, not Unicode -- the
+# default (non-Cairo) pdf() device ggsave() falls back to can't render
+# U+2190/U+2192 and silently substitutes them for these same characters
+# anyway (with a console warning), so writing them directly is identical
+# output without the warning.
+low_label <- transform(cutoff_df, x = cutoff - 3, label = "Low <-")
+high_label <- transform(cutoff_df, x = cutoff + 3, label = "-> High")
+
 p <- ggplot(data, aes(x = mean, fill = condition)) +
   geom_histogram(
     position = "identity",
-    alpha = 0.6,
+    alpha = 0.7,
     bins = 50,
     colour = NA
   ) +
@@ -94,16 +113,36 @@ p <- ggplot(data, aes(x = mean, fill = condition)) +
     linetype = "dashed",
     colour = "black"
   ) +
+  geom_text(
+    data = low_label,
+    aes(x = x, label = label),
+    y = Inf,
+    hjust = 1,
+    vjust = 1.5,
+    inherit.aes = FALSE,
+    size = 4
+  ) +
+  geom_text(
+    data = high_label,
+    aes(x = x, label = label),
+    y = Inf,
+    hjust = 0,
+    vjust = 1.5,
+    inherit.aes = FALSE,
+    size = 4
+  ) +
   facet_wrap(vars(TE), scales = "free_y") +
+  scale_fill_manual(values = c("#cccccc", "#dd3b3b")) +
   labs(
-    x = "Mean 5' UTR CpG methylation (%)",
+    x = "Mean 5' UTR methylation (%)",
     y = "Count",
     fill = NULL
   ) +
   theme_cowplot(14) +
   theme(
-    strip.text = element_text(size = 12),
-    legend.position = "top"
+    strip.background = element_blank(),
+    strip.text = element_text(size = 14, face = "bold"),
+    legend.position = "right"
   )
 
 ggsave(
