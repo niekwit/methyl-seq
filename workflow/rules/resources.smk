@@ -94,6 +94,28 @@ rule chrom_sizes:
         "cut -f1,2 {input} > {output} 2> {log}"
 
 
+# EM-seq spike-in/conversion-control contigs (methylation_controls.fa,
+# concatenated onto the real genome in combine_fasta above), as a BED --
+# same contig names already excluded from bed/whole_genome.bed
+# (generate_regions.py), results/bed/CpG_merged_{condition}.bed
+# (process_methylation_calls.smk), and dmr.R. Used to blacklist them from
+# bigwig_summary's genome-wide binning (bigwig.smk), which otherwise has
+# no per-region restriction to exclude them via.
+rule control_dna_regions:
+    input:
+        "resources/chrom_sizes.txt",
+    output:
+        "resources/control_dna_regions.bed",
+    log:
+        "logs/resources/control_dna_regions.log",
+    threads: 1
+    shell:
+        "awk -v OFS='\t' "
+        "'$1 ~ /^(phage_T4|phage_Xp12|phage_lambda|plasmid_puc19c)$/ "
+        "{{ print $1, 0, $2 }}' "
+        "{input} > {output} 2> {log}"
+
+
 use rule get_genome_fasta as get_gtf with:
     output:
         resources.gtf,

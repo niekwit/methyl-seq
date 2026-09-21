@@ -34,6 +34,7 @@ rule bedgraph_to_bigwig:
 rule bigwig_summary:
     input:
         bw=expand("results/bismark/{sample}/{sample}.deduplicated.bw", sample=SAMPLES),
+        blacklist="resources/control_dna_regions.bed",
     output:
         "results/deeptools/bigwig_summary.npz",
     params:
@@ -49,6 +50,7 @@ rule bigwig_summary:
     shell:
         "multiBigwigSummary bins "
         "--bwfiles {input.bw} "
+        "--blackListFileName {input.blacklist} "
         "--binSize {params.binSize} "
         "{params.extra} "
         "--outFile {output} "

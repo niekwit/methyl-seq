@@ -134,7 +134,7 @@ DMR:
 
 #### QC: PCA and sample clustering
 
-`deeptools:bigwig_summary` and `deeptools:plotPCA` control `multiBigwigSummary` and `plotPCA` (both from [deepTools](https://deeptools.readthedocs.io/)), run on the per-condition methylation bigwigs to check how similar/distinct your conditions are. `bigwig_summary:binSize` sets the genomic bin size for summarizing signal (smaller = finer-grained but slower); `extra` on either passes additional arguments straight through to the respective deepTools command. Produces `results/deeptools/PCA.tab` (the underlying values) and `results/plots/PCA.pdf`/`scree.pdf`.
+`deeptools:bigwig_summary` and `deeptools:plotPCA` control `multiBigwigSummary` and `plotPCA` (both from [deepTools](https://deeptools.readthedocs.io/)), run on the per-condition methylation bigwigs to check how similar/distinct your conditions are. `bigwig_summary:binSize` sets the genomic bin size for summarizing signal (smaller = finer-grained but slower); `extra` on either passes additional arguments straight through to the respective deepTools command. EM-seq spike-in/conversion-control contigs (`phage_T4`, `phage_Xp12`, `phage_lambda`, `plasmid_puc19c`) are excluded via `--blackListFileName` so they don't skew the binning/clustering. Produces `results/deeptools/PCA.tab` (the underlying values) and `results/plots/PCA.pdf`/`scree.pdf`.
 
 #### DMR analysis
 
