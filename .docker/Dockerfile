@@ -1,6 +1,6 @@
 FROM condaforge/miniforge3:latest
 LABEL io.github.snakemake.containerized="true"
-LABEL io.github.snakemake.conda_env_hash="b7c0a78e06fa941a6f451cae7e9b004875e7238d07cdd0a620b1877503e6e8bf"
+LABEL io.github.snakemake.conda_env_hash="976f40c198012279ca27108d1f44ed5377115ad89ddbbe17f01b2d94c38ee43d"
 
 # Step 2: Retrieve conda environments
 
@@ -118,6 +118,23 @@ RUN mkdir -p /conda-envs/2bdd78eb3d93aba4429dda48c67f8f3c
 COPY workflow/envs/deeptools.yaml /conda-envs/2bdd78eb3d93aba4429dda48c67f8f3c/environment.yaml
 
 # Conda environment:
+#   source: workflow/envs/line1_utr.yaml
+#   prefix: /conda-envs/f14c601252fb5262fd61bc6345807c6d
+#   name: line1_utr
+#   channels:
+#     - conda-forge
+#     - bioconda
+#     - nodefaults
+#   dependencies:
+#     - python=3.12
+#     - biopython=1.88
+#     - pyfaidx=0.9.0.4
+#     - mappy=2.31
+#     - pandas
+RUN mkdir -p /conda-envs/f14c601252fb5262fd61bc6345807c6d
+COPY workflow/envs/line1_utr.yaml /conda-envs/f14c601252fb5262fd61bc6345807c6d/environment.yaml
+
+# Conda environment:
 #   source: workflow/envs/trim_galore.yml
 #   prefix: /conda-envs/f25143b31d35300a2e0f8a6febf76392
 #   name: trim_galore
@@ -141,5 +158,6 @@ RUN conda env create --prefix /conda-envs/fc3f74ad3a4edd6540650576745e8ff5 --fil
     conda env create --prefix /conda-envs/2ab973151943ea4481469dc78c1becb6 --file /conda-envs/2ab973151943ea4481469dc78c1becb6/environment.yaml && \
     conda env create --prefix /conda-envs/1118a0e1330ad611769d983470e374d9 --file /conda-envs/1118a0e1330ad611769d983470e374d9/environment.yaml && \
     conda env create --prefix /conda-envs/2bdd78eb3d93aba4429dda48c67f8f3c --file /conda-envs/2bdd78eb3d93aba4429dda48c67f8f3c/environment.yaml && \
+    conda env create --prefix /conda-envs/f14c601252fb5262fd61bc6345807c6d --file /conda-envs/f14c601252fb5262fd61bc6345807c6d/environment.yaml && \
     conda env create --prefix /conda-envs/f25143b31d35300a2e0f8a6febf76392 --file /conda-envs/f25143b31d35300a2e0f8a6febf76392/environment.yaml && \
     conda clean --all -y
