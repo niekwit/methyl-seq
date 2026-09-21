@@ -60,6 +60,15 @@ import shutil
 import pandas as pd
 import pybedtools
 
+# EM-seq spike-in/conversion-control contigs from resources.control_fasta_url
+# (concatenated onto the real genome in combine_fasta, resources.smk), so
+# chrom_sizes.txt -- cut from the *combined* genome's .fai -- lists them
+# alongside real chromosomes. They don't belong in "whole genome" (or
+# intergenic, derived from it by subtraction) -- same contig names already
+# excluded from CpG_merged_{condition}.bed (process_methylation_calls.smk)
+# and from coverage_bedgraph's per-C bedGraph (bigwig.smk).
+CONTROL_DNA_CONTIGS = {"phage_T4", "phage_Xp12", "phage_lambda", "plasmid_puc19c"}
+
 
 def open_maybe_gzip(path):
     return gzip.open(path, "rt") if path.endswith(".gz") else open(path, "rt")
@@ -166,15 +175,22 @@ def intron_bed(gtf, out_bed):
 def whole_genome_bed(chrom_sizes, out_bed):
     logging.info(f"Deriving whole-genome intervals from {chrom_sizes}")
     n = 0
+    n_skipped = 0
     with open(chrom_sizes) as fh, open(out_bed, "wt") as out:
         for line in fh:
             if not line.strip():
                 continue
             chrom, size = line.rstrip("\n").split("\t")[:2]
+            if chrom in CONTROL_DNA_CONTIGS:
+                n_skipped += 1
+                continue
             out.write(f"{chrom}\t0\t{size}\n")
             n += 1
 
-    logging.info(f"Wrote {n} contigs to {out_bed}")
+    logging.info(
+        f"Wrote {n} contigs to {out_bed}"
+        + (f" ({n_skipped} control-DNA contig(s) excluded)" if n_skipped else "")
+    )
 
 
 def feature_bed(gtf, feature, out_bed):
