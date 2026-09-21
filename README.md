@@ -57,13 +57,12 @@ Paired-end vs. single-end is detected automatically from the filenames.
 
 Two required columns. Sample and condition names must contain only alphanumerics and underscores.
 
-```csv
-sample,condition
-WT_1,WT
-WT_2,WT
-KO_1,KO
-KO_2,KO
-```
+| sample | condition |
+| ------ | --------- |
+| WT_1   | WT        |
+| WT_2   | WT        |
+| KO_1   | KO        |
+| KO_2   | KO        |
 
 Most final outputs (bigwig tracks, boxplots, the ICR heatmap) are per-`condition`, not per-`sample`: replicate samples sharing a condition are averaged/merged together (e.g. `results/bigwig/{condition}.bw`). Per-sample outputs (alignment, deduplication, coverage) still exist under `results/bismark/{sample}/` for inspection, but condition is the unit most downstream analyses report at.
 
