@@ -3,6 +3,8 @@
 [![Snakemake](https://img.shields.io/badge/snakemake-≥8.25.5-brightgreen.svg)](https://snakemake.github.io)
 [![GitHub actions status](https://github.com/niekwit/methyl-seq/actions/workflows/main.yaml/badge.svg?branch=main)](https://github.com/niekwit/methyl-seq/actions/workflows/main.yaml?query=branch%3Amain)
 [![run with conda](http://img.shields.io/badge/run%20with-conda-3EB049?labelColor=000000&logo=anaconda)](https://docs.conda.io/en/latest/)
+[![Code style: black](https://img.shields.io/badge/python%20code%20style-black-000000.svg)](https://github.com/psf/black)
+[![R code style: Air](https://img.shields.io/badge/R%20code%20style-Air-4B8BBE.svg)](https://posit-dev.github.io/air/)
 
 A Snakemake workflow for EM-seq / bisulfite sequencing (WGBS) data analysis. Starting from FASTQ files, it performs read trimming, alignment with Bismark, methylation extraction, QC, and downstream analysis including CpG methylation visualisation and optional DMR calling.
 
