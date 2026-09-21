@@ -140,6 +140,20 @@ DMR:
 
 Optional (`DMR:run: True`); uses [methylKit](https://bioconductor.org/packages/methylKit/) to tile the genome into `tile_size`-bp windows (stepping by `step_size`, so overlapping tiles are possible if `step_size < tile_size`), keep only tiles with at least `min_per_group` samples covered in both groups, and test each tile for a methylation difference between `reference_condition`'s samples and every other sample pooled together as the comparison group (a single binary comparison, not one comparison per non-reference condition — relevant if `samples.csv` has more than two conditions). A tile is called a significant DMR if its absolute methylation difference exceeds `difference_threshold` (percentage points) and its q-value is below `qvalue_threshold`. Produces `hypermethylated_DMRs.bed`/`hypomethylated_DMRs.bed` (and `..._annotated.tab`, with nearest-gene/genomic-feature annotation via ChIPseeker) under `results/dmrs/`, plus `DMR_volcano.pdf`, `DMR_genomic_distribution.pdf`, and `DMR_distance_to_TSS.pdf` under `results/plots/dmrs/`.
 
+Also produces a CpG methylation profile and heatmap centred on each DMR's midpoint (deepTools `computeMatrix reference-point` + `plotProfile`/`plotHeatmap`, one condition per line/row, run separately for hypo- and hypermethylated DMRs), controlled by a required `DMR:profile:` block:
+
+```yaml
+DMR:
+  ...
+  profile:
+    upstream: 4000    # bp upstream of each DMR's centre
+    downstream: 4000  # bp downstream of each DMR's centre
+    binSize: 100       # bp, signal averaging bin size
+    extra: ""            # extra computeMatrix arguments
+```
+
+Produces `results/plots/dmrs/hypomethylated_heatmap.pdf`/`hypomethylated_profile.pdf` and the `hypermethylated` equivalents.
+
 #### Boxplot regions
 
 `boxplots.pdf` always includes the standard regions generated automatically for the configured genome (`whole_genome`, `genic`, `exon`, `intron`, `intergenic`, and `promoter`/`cpg_islands` where available) — no config needed for these.
@@ -174,6 +188,26 @@ For each class block, repeat elements overlapping a gene body are excluded first
 Enabling any TE class block also makes the `genic`/`promoter`/`cpg_islands` regions in `boxplots.pdf` transposon-subtracted, so their CpG signal isn't contaminated by repeat-element methylation patterns.
 
 TE analysis requires a genome with a RepeatMasker track (all supported genomes except `dm6`).
+
+Each TE class block also gets a CpG methylation profile and heatmap over its own regions (the class total plus any configured family/subfamilies together, one plot per class block), via deepTools `computeMatrix scale-regions` + `plotProfile`/`plotHeatmap`. `--regionBodyLength` is always that class block's own `min_length`; everything else is set by an optional `profile:` sub-block (all keys optional, shown here at their defaults):
+
+```yaml
+boxplot:
+  ...
+  LINE:
+    min_length: 6000
+    family: L1
+    subfamilies:
+      - L1MdA
+      - L1MdF
+    profile:
+      upstream: 2000    # bp upstream of each element
+      downstream: 2000  # bp downstream of each element
+      binSize: 100        # bp, signal averaging bin size
+      extra: ""             # extra computeMatrix arguments
+```
+
+Produces `results/plots/te_{class_name}_heatmap.pdf`/`te_{class_name}_profile.pdf` for every configured TE class block, regardless of whether `profile:` is set.
 
 #### LINE1 5' UTR vs. remainder boxplots
 
@@ -278,6 +312,8 @@ results/
 │   ├── boxplots_data.csv
 │   ├── te_boxplots.pdf              # TE class/family/subfamily boxplots (if any boxplot TE class block is configured)
 │   ├── te_boxplots_data.csv
+│   ├── te_{class_name}_heatmap.pdf  # CpG methylation heatmap over this class's regions (one pair per TE class block)
+│   ├── te_{class_name}_profile.pdf  # ...and the matching profile plot
 │   ├── te_5utr_boxplots.pdf         # LINE1 5' UTR vs. remainder boxplots (if any boxplot TE class block configures utr_analysis)
 │   ├── te_5utr_boxplots_data.csv
 │   ├── te_5utr_methylation_histogram.pdf   # LINE1 5' UTR methylation histograms (same utr_analysis condition)
@@ -287,6 +323,9 @@ results/
 ├── te_5utr_status/                  # Only produced if any boxplot TE class block configures utr_analysis
 │   ├── {te_name}_{ko_condition}_active.bed    # Elements methylated in reference_condition, lost upon {ko_condition}
 │   └── {te_name}_{ko_condition}_inactive.bed  # Elements methylated in reference_condition, stay methylated in {ko_condition}
+├── deeptools/
+│   ├── dmr_{status}_matrix.gz       # Only produced if DMR.run: True -- computeMatrix output behind the DMR heatmap/profile
+│   └── te_{class_name}_matrix.gz    # computeMatrix output behind each TE class's heatmap/profile
 └── dmrs/                            # Only produced if DMR.run: True
     ├── hypermethylated_DMRs.bed
     ├── hypomethylated_DMRs.bed
@@ -298,7 +337,9 @@ results/
     └── plots/dmrs/
         ├── DMR_distance_to_TSS.pdf
         ├── DMR_genomic_distribution.pdf
-        └── DMR_volcano.pdf
+        ├── DMR_volcano.pdf
+        ├── {status}_heatmap.pdf      # CpG methylation heatmap centred on hypo-/hypermethylated DMRs
+        └── {status}_profile.pdf      # ...and the matching profile plot
 ```
 
 ---

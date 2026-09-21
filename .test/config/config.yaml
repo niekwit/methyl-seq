@@ -40,8 +40,17 @@ boxplot:
     utr_analysis:
       genbank: resources/L1_consensus_mm.gb
       methylation_cutoff: 50
+    # Small flanks/bins to fit the .test/ mini genome window and keep CI fast
+    profile:
+      upstream: 500
+      downstream: 500
+      binSize: 10
+      extra: ""
   LTR:
     min_length: 100
+    # No profile: block here on purpose -- exercises the default-settings
+    # code path (te_profile_settings() in common.smk) alongside LINE's
+    # explicit one above
 
 DMR:
   # methylKit settings for DMR calling
@@ -52,3 +61,9 @@ DMR:
   min_per_group: 1
   difference_threshold: 25
   qvalue_threshold: 0.01
+  # Small flanks/bins to fit the .test/ mini genome window and keep CI fast
+  profile:
+    upstream: 500
+    downstream: 500
+    binSize: 10
+    extra: ""

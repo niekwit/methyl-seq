@@ -55,6 +55,7 @@ include: "rules/process_methylation_calls.smk"
 include: "rules/boxplot.smk"
 include: "rules/te_utr.smk"
 include: "rules/dmrs.smk"
+include: "rules/profiles.smk"
 
 
 # -----------------------------------------------------

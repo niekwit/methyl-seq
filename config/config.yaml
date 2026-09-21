@@ -33,6 +33,14 @@ boxplot:
     subfamilies:
       - L1MdA
       - L1MdF
+    # Optional: CpG methylation profile/heatmap over this class's regions
+    # (computeMatrix scale-regions + plotHeatmap/plotProfile); all keys
+    # optional, shown here at their defaults
+    # profile:
+    #   upstream: 2000
+    #   downstream: 2000
+    #   binSize: 100
+    #   extra: ""
 
   # Standard regions (whole_genome, genic, exon, intron, intergenic, and
   # promoter/cpg_islands where available for the genome) are generated
@@ -51,3 +59,11 @@ DMR:
   min_per_group: 2
   difference_threshold: 25
   qvalue_threshold: 0.01
+  # CpG methylation profile/heatmap centred on DMRs (computeMatrix
+  # reference-point + plotHeatmap/plotProfile), run separately for hypo-
+  # and hypermethylated DMRs
+  profile:
+    upstream: 4000
+    downstream: 4000
+    binSize: 100
+    extra: ""

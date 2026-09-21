@@ -172,6 +172,33 @@ properties:
           required:
             - genbank
           additionalProperties: false
+        profile:
+          type: object
+          description: >-
+            Optional computeMatrix scale-regions / plotHeatmap / plotProfile
+            settings for this class's own regions (the class total plus any
+            configured family/subfamilies), using results/bigwig/{condition}.bw
+            as signal and this block's own "min_length" as
+            --regionBodyLength. Produces
+            results/plots/te_{class_name}_heatmap.pdf and
+            results/plots/te_{class_name}_profile.pdf. All keys optional.
+          properties:
+            upstream:
+              type: integer
+              minimum: 0
+              description: "Region upstream of each element to include (bp), default 2000"
+            downstream:
+              type: integer
+              minimum: 0
+              description: "Region downstream of each element to include (bp), default 2000"
+            binSize:
+              type: integer
+              minimum: 1
+              description: "Bin size (bp) for signal averaging, default 100"
+            extra:
+              type: string
+              description: "Extra arguments passed to computeMatrix, default none"
+          additionalProperties: false
       required:
         - min_length
       dependentRequired:
@@ -184,6 +211,76 @@ properties:
           family:
             const: "L1"
       additionalProperties: false
+  DMR:
+    type: object
+    description: "Differentially methylated region (DMR) calling via methylKit"
+    properties:
+      run:
+        type: boolean
+        description: "Whether to run DMR calling"
+      reference_condition:
+        type: string
+        description: "Condition to compare every other condition against; must match config/samples.csv"
+      tile_size:
+        type: integer
+        description: "Genome tile size (bp) tested for differential methylation"
+      step_size:
+        type: integer
+        description: >-
+          Tile step size (bp); overlapping tiles are possible if less than
+          tile_size
+      min_per_group:
+        type: integer
+        description: "Minimum samples covered per group for a tile to be tested"
+      difference_threshold:
+        type: number
+        description: >-
+          Minimum absolute methylation difference (percentage points) for
+          a tile to be called a DMR
+      qvalue_threshold:
+        type: number
+        description: "Maximum q-value for a tile to be called a DMR"
+      profile:
+        type: object
+        description: >-
+          computeMatrix reference-point / plotHeatmap / plotProfile
+          settings for CpG methylation centred on each DMR's midpoint,
+          using results/bigwig/{condition}.bw as signal, run separately
+          for hypo- and hypermethylated DMRs. Produces
+          results/plots/dmrs/{status}_heatmap.pdf and
+          results/plots/dmrs/{status}_profile.pdf.
+        properties:
+          upstream:
+            type: integer
+            minimum: 0
+            description: "Region upstream of each DMR's centre to include (bp)"
+          downstream:
+            type: integer
+            minimum: 0
+            description: "Region downstream of each DMR's centre to include (bp)"
+          binSize:
+            type: integer
+            minimum: 1
+            description: "Bin size (bp) for signal averaging"
+          extra:
+            type: string
+            description: "Extra arguments passed to computeMatrix"
+        required:
+          - upstream
+          - downstream
+          - binSize
+          - extra
+        additionalProperties: false
+    required:
+      - run
+      - reference_condition
+      - tile_size
+      - step_size
+      - min_per_group
+      - difference_threshold
+      - qvalue_threshold
+      - profile
+    additionalProperties: false
 
 required:
   - genome
@@ -191,3 +288,4 @@ required:
   - bismark
   - deeptools
   - boxplot
+  - DMR

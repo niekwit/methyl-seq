@@ -45,6 +45,9 @@ def targets():
 
     if te_regions():
         targets.append("results/plots/te_boxplots.pdf")
+        for _class_name, _ in te_class_blocks():
+            targets.append(f"results/plots/te_{_class_name}_heatmap.pdf")
+            targets.append(f"results/plots/te_{_class_name}_profile.pdf")
 
     if te_utr_names():
         targets.append("results/plots/te_5utr_boxplots.pdf")
@@ -64,6 +67,10 @@ def targets():
                 "results/dmrs/all_methylation_tiles.rds",
                 "results/dmrs/differential_methylation_tiles.rds",
                 "results/dmrs/significant_differential_methylation_tiles.rds",
+                "results/plots/dmrs/hypomethylated_heatmap.pdf",
+                "results/plots/dmrs/hypomethylated_profile.pdf",
+                "results/plots/dmrs/hypermethylated_heatmap.pdf",
+                "results/plots/dmrs/hypermethylated_profile.pdf",
             ]
         )
 
@@ -262,6 +269,36 @@ def validate_te_config(te_regions, other_regions, resources):
             f"TE region name(s) {sorted(clashes)} clash with standard/"
             "custom boxplot region(s) of the same name -- please rename them."
         )
+
+
+def te_class_region_list(class_name, block):
+    """
+    [class_name] + family total(s) + subfamilies for one TE class block, in
+    config order -- the exact set of bed/{name}.bed region files
+    (resources.smk's generate_te_regions_{class_name} rule) that belong to
+    this block, used as -R inputs and --regionsLabel for its computeMatrix
+    profile/heatmap (profiles.smk).
+    """
+    return [class_name] + te_family_list(block) + list(block.get("subfamilies", []))
+
+
+def te_profile_settings(block):
+    """
+    {upstream, downstream, binSize, extra} for a TE class block's optional
+    `profile:` sub-block (computeMatrix scale-regions / plotHeatmap /
+    plotProfile), Python-side defaults when absent -- mirrors
+    utr_analysis's own optional-sub-block-with-defaults convention rather
+    than deeptools:'s required-with-no-defaults one, since every existing
+    TE class block (including ones with no family/subfamily/utr_analysis)
+    should keep working unmodified.
+    """
+    profile = block.get("profile", {})
+    return {
+        "upstream": profile.get("upstream", 2000),
+        "downstream": profile.get("downstream", 2000),
+        "binSize": profile.get("binSize", 100),
+        "extra": profile.get("extra", ""),
+    }
 
 
 def te_utr_class_blocks():
