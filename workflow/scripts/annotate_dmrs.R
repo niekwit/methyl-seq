@@ -144,10 +144,12 @@ tryCatch(
   error = function(e) {
     plot.new()
     text(
-      0.5, 0.5,
+      0.5,
+      0.5,
       paste0(
         "Could not generate distance-to-TSS plot\n",
-        "(likely too few/skewed DMRs): ", conditionMessage(e)
+        "(likely too few/skewed DMRs): ",
+        conditionMessage(e)
       ),
       cex = 0.8
     )
@@ -162,9 +164,11 @@ diff_tiles_df <- getData(diff_tiles) %>%
   mutate(
     sig = case_when(
       qvalue < qvalue_threshold &
-        meth.diff > difference_threshold ~ "Hypermethylated",
+        meth.diff > difference_threshold ~
+        "Hypermethylated",
       qvalue < qvalue_threshold &
-        meth.diff < -difference_threshold ~ "Hypomethylated",
+        meth.diff < -difference_threshold ~
+        "Hypomethylated",
       TRUE ~ "Not significant"
     )
   )

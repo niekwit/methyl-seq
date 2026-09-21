@@ -17,7 +17,10 @@ bed_col_names <- c("chrom", "start", "end", "name", "score", "strand")
 write_empty_bed <- function(te, ko_condition, element_status) {
   write_tsv(
     data.frame(matrix(ncol = 6, nrow = 0)),
-    file.path(out_dir, paste0(te, "_", ko_condition, "_", element_status, ".bed")),
+    file.path(
+      out_dir,
+      paste0(te, "_", ko_condition, "_", element_status, ".bed")
+    ),
     col_names = FALSE
   )
 }
@@ -31,7 +34,14 @@ data <- read.delim(
   snakemake@input[["avg"]],
   header = FALSE,
   col.names = c(
-    "name", "size", "covered", "sum", "mean0", "mean", "TE", "condition"
+    "name",
+    "size",
+    "covered",
+    "sum",
+    "mean0",
+    "mean",
+    "TE",
+    "condition"
   )
 ) %>%
   mutate(base_id = sub("_5UTR$", "", name))
