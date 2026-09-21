@@ -9,6 +9,20 @@ library(tidyverse)
 library(GenomicRanges)
 library(rtracklayer)
 
+# EM-seq spike-in/conversion-control contigs (methylation_controls.fa,
+# concatenated onto the real genome for alignment -- see combine_fasta,
+# resources.smk). This script's own input (CpG_OT/CpG_OB.deduplicated.txt.gz)
+# still contains calls on them -- unlike results/bed/CpG_merged_{condition}.bed
+# (process_methylation_calls.smk) and bed/whole_genome.bed
+# (generate_regions.py), which already exclude the same contigs -- so
+# methylKit would otherwise tile and test them like any real chromosome.
+CONTROL_DNA_CONTIGS <- c(
+  "phage_T4",
+  "phage_Xp12",
+  "phage_lambda",
+  "plasmid_puc19c"
+)
+
 # Get input files from Snakemake
 cpgot_files <- snakemake@input[["cpgot"]]
 cpgob_files <- snakemake@input[["cpgob"]]
@@ -52,6 +66,9 @@ process_bismark_data <- function(
   dt <- rbindlist(list(ot, ob))
   rm(ot, ob)
   gc() # Garbage collection to keep memory lean
+
+  # Drop spike-in control-DNA calls -- see CONTROL_DNA_CONTIGS above
+  dt <- dt[!chr %in% CONTROL_DNA_CONTIGS]
 
   # Collapse i and i+1 into a single CpG unit
   # We round even positions down to the preceding odd position.
