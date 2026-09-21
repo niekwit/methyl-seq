@@ -207,7 +207,7 @@ boxplot:
       extra: ""             # extra computeMatrix arguments
 ```
 
-Produces `results/plots/te_{class_name}_heatmap.pdf`/`te_{class_name}_profile.pdf` for every configured TE class block, regardless of whether `profile:` is set.
+Produces `results/plots/te_{class_name}_heatmap.pdf` for every configured TE class block, regardless of whether `profile:` is set (`plotHeatmap`'s default layout already includes the summary profile above the heatmap, so there's no separate profile-only plot for TEs).
 
 #### LINE1 5' UTR vs. remainder boxplots
 
@@ -312,8 +312,7 @@ results/
 │   ├── boxplots_data.csv
 │   ├── te_boxplots.pdf              # TE class/family/subfamily boxplots (if any boxplot TE class block is configured)
 │   ├── te_boxplots_data.csv
-│   ├── te_{class_name}_heatmap.pdf  # CpG methylation heatmap over this class's regions (one pair per TE class block)
-│   ├── te_{class_name}_profile.pdf  # ...and the matching profile plot
+│   ├── te_{class_name}_heatmap.pdf  # CpG methylation profile + heatmap over this class's regions (one per TE class block)
 │   ├── te_5utr_boxplots.pdf         # LINE1 5' UTR vs. remainder boxplots (if any boxplot TE class block configures utr_analysis)
 │   ├── te_5utr_boxplots_data.csv
 │   ├── te_5utr_methylation_histogram.pdf   # LINE1 5' UTR methylation histograms (same utr_analysis condition)
@@ -325,7 +324,7 @@ results/
 │   └── {te_name}_{ko_condition}_inactive.bed  # Elements methylated in reference_condition, stay methylated in {ko_condition}
 ├── deeptools/
 │   ├── dmr_{status}_matrix.gz       # Only produced if DMR.run: True -- computeMatrix output behind the DMR heatmap/profile
-│   └── te_{class_name}_matrix.gz    # computeMatrix output behind each TE class's heatmap/profile
+│   └── te_{class_name}_matrix.gz    # computeMatrix output behind each TE class's heatmap
 └── dmrs/                            # Only produced if DMR.run: True
     ├── hypermethylated_DMRs.bed
     ├── hypomethylated_DMRs.bed

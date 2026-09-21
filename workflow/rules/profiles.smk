@@ -195,33 +195,3 @@ for _class_name, _block in te_class_blocks():
             f"--plotTitle 'CpG methylation at {_class_name} elements' "
             "--colorMap viridis "
             "2> {log}"
-
-    rule:
-        name:
-            f"te_profile_plot_{_class_name}"
-        input:
-            f"results/deeptools/te_{_class_name}_matrix.gz",
-        output:
-            f"results/plots/te_{_class_name}_profile.pdf",
-        params:
-            samples_label=CONDITIONS,
-            regions_label=_region_names,
-        log:
-            f"logs/deeptools/te_profile_{_class_name}.log",
-        threads: 1
-        resources:
-            runtime=15,
-            mem_mb=4000,
-        conda:
-            "../envs/deeptools.yaml"
-        shell:
-            "plotProfile "
-            "--matrixFile {input} "
-            "--outFileName {output} "
-            "--perGroup "
-            "--samplesLabel {params.samples_label} "
-            "--regionsLabel {params.regions_label} "
-            "--yAxisLabel 'CpG methylation (%)' "
-            "--averageType mean "
-            f"--plotTitle 'CpG methylation at {_class_name} elements' "
-            "2> {log}"

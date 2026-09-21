@@ -47,7 +47,6 @@ def targets():
         targets.append("results/plots/te_boxplots.pdf")
         for _class_name, _ in te_class_blocks():
             targets.append(f"results/plots/te_{_class_name}_heatmap.pdf")
-            targets.append(f"results/plots/te_{_class_name}_profile.pdf")
 
     if te_utr_names():
         targets.append("results/plots/te_5utr_boxplots.pdf")
