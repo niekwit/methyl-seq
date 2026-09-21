@@ -7,8 +7,9 @@ The Docker image derived from this file contains all Conda environments for each
 These images are shared via [Docker Hub](https://hub.docker.com/repository/docker/niekwit/methyl-seq/general) and are generated as follows (from directory with workflow code):
 
 ```shell
-$ snakemake --containerize > Dockerfile
-$ sudo docker build -t niekwit/methyl-seq:0.6.0 .
-$ sudo docker login
-$ sudo docker push niekwit/methyl-seq:0.6.0
+snakemake --containerize > Dockerfile
+docker build -t niekwit/methyl-seq:0.6.0 .
+docker login
+docker push niekwit/methyl-seq:0.6.0
+
 ```
