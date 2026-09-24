@@ -213,7 +213,7 @@ if resources.repeat_mask_url:
 #
 # When the TE boxplot feature is on (validate_te_config() in common.smk
 # already guarantees resources.repeat_mask is set whenever TE_REGIONS is
-# non-empty), genic/promoter/cpg_islands are written to intermediate
+# non-empty), genic/promoter/cpg_islands/intergenic are written to intermediate
 # "_raw" paths here instead of their final bed/ location: the TE
 # pipeline's gene-overlap exclusion (filter_repeat_mask_nongenic, below)
 # needs the ORIGINAL, un-subtracted gene-body span, and the
@@ -228,7 +228,9 @@ _region_outputs = {
     "genic": "resources/genic_raw.bed" if _te_active else "bed/genic.bed",
     "exon": "bed/exon.bed",
     "intron": "bed/intron.bed",
-    "intergenic": "bed/intergenic.bed",
+    "intergenic": (
+        "resources/intergenic_raw.bed" if _te_active else "bed/intergenic.bed"
+    ),
 }
 if resources.regulatory_gtf:
     _region_outputs["promoter"] = (
@@ -311,6 +313,18 @@ if _te_active:
         shell:
             "bedtools subtract -a {input.raw} -b {input.te} | "
             "bedtools sort -i - -g {input.chrom_sizes} > {output} 2> {log}"
+
+    # Intergenic = genome minus genes (generate_regions.py); transposons
+    # are not genic-overlapping by definition here, so trim them out too.
+    use rule subtract_te_from_genic as subtract_te_from_intergenic with:
+        input:
+            raw=_region_outputs["intergenic"],
+            te=resources.repeat_mask,
+            chrom_sizes="resources/chrom_sizes.txt",
+        output:
+            "bed/intergenic.bed",
+        log:
+            "logs/resources/subtract_te_intergenic.log",
 
     if resources.regulatory_gtf:
 

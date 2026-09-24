@@ -186,7 +186,7 @@ boxplot:
 ```
 For each class block, repeat elements overlapping a gene body are excluded first, then the remainder is filtered by `min_length`. This gives, in order: the class total (all filtered elements), then one facet per listed `family` (`repFamily` match), then one facet per listed `subfamilies` entry (`repName` prefix match, e.g. `"L1MdA"` matches `"L1MdA"`/`"L1MdA_I"`/`"L1MdA_II"`/... but not `"L1MdAxyz"`, and is restricted to the configured family/families). A class, family, or subfamily name that matches zero elements is a hard error (usually a typo or an overly strict `min_length`) rather than a silently empty facet.
 
-Enabling any TE class block also makes the `genic`/`promoter`/`cpg_islands` regions in `boxplots.pdf` transposon-subtracted, so their CpG signal isn't contaminated by repeat-element methylation patterns.
+Enabling any TE class block also makes the `genic`/`promoter`/`cpg_islands`/`intergenic` regions in `boxplots.pdf` transposon-subtracted, so their CpG signal isn't contaminated by repeat-element methylation patterns.
 
 TE analysis requires a genome with a RepeatMasker track (all supported genomes except `dm6`).
 
