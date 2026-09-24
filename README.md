@@ -210,6 +210,12 @@ boxplot:
 
 Produces `results/plots/te_{class_name}_heatmap.pdf` for every configured TE class block, regardless of whether `profile:` is set (`plotHeatmap`'s default layout already includes the summary profile above the heatmap, so there's no separate profile-only plot for TEs).
 
+#### TE family sample correlation
+
+For every `family` configured under any TE class block (e.g. `L1`, or both `L1` and `L2` for `family: "L1,L2"`), the workflow also computes how similar the individual samples (replicates included, not the per-condition averages) are to each other over that family's elements. It runs deepTools `multiBigwigSummary BED-file` on the per-sample methylation bigwigs (`results/bismark/{sample}/{sample}.deduplicated.bw`) over the family's own filtered element set (the same regions as the family's boxplot/heatmap), then `plotCorrelation` with Spearman correlation and outlier removal, drawn as a clustered heatmap. Class-only blocks with no `family` (e.g. `LTR` above) and subfamilies get no correlation plot, and nothing is run if no block configures a `family`. No extra config is needed.
+
+Produces `results/plots/te_{family}_correlation.pdf` and the underlying matrix `results/deeptools/te_{family}_correlation.tab` (with `results/deeptools/te_{family}_bigwig_summary.npz`).
+
 #### LINE1 5' UTR vs. remainder boxplots
 
 Optionally add a `utr_analysis:` sub-block under a TE class block to split each near-full-length LINE1 (L1) element into its 5' UTR and "remainder" (ORF1 + linker + ORF2 + 3' UTR), and boxplot %CpG methylation of the two separately. This is only valid when that class block's `family` is exactly `L1` (LINE1 is the only TE with this ORF1/ORF2 UTR architecture) — the workflow errors out at startup otherwise.
@@ -314,6 +320,7 @@ results/
 │   ├── te_boxplots.pdf              # TE class/family/subfamily boxplots (if any boxplot TE class block is configured)
 │   ├── te_boxplots_data.csv
 │   ├── te_{class_name}_heatmap.pdf  # CpG methylation profile + heatmap over this class's regions (one per TE class block)
+│   ├── te_{family}_correlation.pdf  # Spearman correlation heatmap of samples over this TE family's elements (one per configured family)
 │   ├── te_5utr_boxplots.pdf         # LINE1 5' UTR vs. remainder boxplots (if any boxplot TE class block configures utr_analysis)
 │   ├── te_5utr_boxplots_data.csv
 │   ├── te_5utr_methylation_histogram.pdf   # LINE1 5' UTR methylation histograms (same utr_analysis condition)
@@ -325,6 +332,8 @@ results/
 │   └── {te_name}_{ko_condition}_inactive.bed  # Elements methylated in reference_condition, stay methylated in {ko_condition}
 ├── deeptools/
 │   ├── dmr_{status}_matrix.gz       # Only produced if DMR.run: True -- computeMatrix output behind the DMR heatmap/profile
+│   ├── te_{family}_bigwig_summary.npz  # multiBigwigSummary output behind each TE family's correlation heatmap
+│   ├── te_{family}_correlation.tab  # ...and its Spearman correlation matrix
 │   └── te_{class_name}_matrix.gz    # computeMatrix output behind each TE class's heatmap
 └── dmrs/                            # Only produced if DMR.run: True
     ├── hypermethylated_DMRs.bed

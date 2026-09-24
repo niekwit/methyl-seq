@@ -47,6 +47,8 @@ def targets():
         targets.append("results/plots/te_boxplots.pdf")
         for _class_name, _ in te_class_blocks():
             targets.append(f"results/plots/te_{_class_name}_heatmap.pdf")
+        for _family in te_families():
+            targets.append(f"results/plots/te_{_family}_correlation.pdf")
 
     if te_utr_names():
         targets.append("results/plots/te_5utr_boxplots.pdf")
@@ -208,6 +210,20 @@ def te_family_list(block):
         if f and f not in seen:
             seen.append(f)
     return seen
+
+
+def te_families():
+    """
+    Ordered list of every TE family name (`family` value) across all TE
+    class blocks under config boxplot, in config order. Each gets its own
+    sample-level CpG methylation correlation heatmap (te_correlation.smk).
+    Family names are unique across blocks (validate_te_config()). Returns
+    [] when no class block configures a `family`.
+    """
+    families = []
+    for _, block in te_class_blocks():
+        families.extend(te_family_list(block))
+    return families
 
 
 def te_regions():

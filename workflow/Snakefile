@@ -23,6 +23,7 @@ CONDITIONS = conditions(CSV)
 REGIONS = regions()
 validate_reference_condition(config["DMR"]["reference_condition"], CONDITIONS)
 TE_REGIONS = te_regions()
+TE_FAMILIES = te_families()
 validate_te_config(TE_REGIONS, REGIONS, resources)
 UTR_TE_NAMES = te_utr_names()
 validate_te_utr_config(te_utr_class_blocks())
@@ -56,6 +57,7 @@ include: "rules/boxplot.smk"
 include: "rules/te_utr.smk"
 include: "rules/dmrs.smk"
 include: "rules/profiles.smk"
+include: "rules/te_correlation.smk"
 
 
 # -----------------------------------------------------
